@@ -13,28 +13,65 @@ const AI_MODEL = 'claude-sonnet-4-6';
 // STYLES
 // ─────────────────────────────────────────────────────────────────────
 const CSS = `
-@import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
 
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
 :root{
-  --bg:#F7F9FC;
+  /* Clarity palette - Apple Health inspired */
+  --bg:#F2F2F7;
   --surface:#FFFFFF;
-  --surface2:#EEF2F7;
-  --border:#E2E8F0;
-  --accent:#1B6FBF;
-  --accent-light:#2B87E3;
-  --accent-bg:rgba(27,111,191,.07);
-  --accent-border:rgba(27,111,191,.18);
-  --warn:#B45309;--wbg:rgba(180,83,9,.07);--wborder:rgba(180,83,9,.2);
-  --danger:#B91C1C;--dbg:rgba(185,28,28,.06);--dborder:rgba(185,28,28,.18);
-  --ok:#065F46;--okbg:rgba(6,95,70,.07);--okborder:rgba(6,95,70,.2);
-  --purple:#7C3AED;--pbg:rgba(124,58,237,.07);--pborder:rgba(124,58,237,.2);
-  --text:#0F1F33;--text2:#4A6280;--text3:#94A8BC;
-  --font:'Sora',system-ui,sans-serif;--mono:'IBM Plex Mono',monospace;
-  --r:12px;
-  --shadow-sm:0 1px 3px rgba(15,31,51,.06),0 1px 2px rgba(15,31,51,.04);
-  --shadow:0 2px 8px rgba(15,31,51,.07),0 4px 20px rgba(15,31,51,.06);
-  --shadow-lg:0 8px 32px rgba(15,31,51,.1),0 2px 8px rgba(15,31,51,.06);
+  --surface2:#F7F7FA;
+  --surface3:#EBEBF0;
+  --border:#E5E5EA;
+  --border2:#D1D1D6;
+
+  /* Accent colors */
+  --accent:#007AFF;
+  --accent-bg:#E5F1FF;
+  --accent-border:#B8D6F7;
+
+  --green:#34C759;
+  --green-bg:#E8F8EC;
+  --green-border:#B8E6C1;
+
+  --orange:#FF9500;
+  --orange-bg:#FFF4E5;
+  --orange-border:#FFDFA8;
+
+  --red:#FF3B30;
+  --red-bg:#FFE5E3;
+  --red-border:#FFBDBD;
+
+  --purple:#AF52DE;
+  --purple-bg:#F3E6FB;
+  --purple-border:#D9B5EB;
+
+  --pink:#FF2D92;
+  --pink-bg:#FFE5EF;
+
+  --yellow:#FFCC00;
+
+  /* Text */
+  --text:#000000;
+  --text2:#3C3C43;
+  --text3:#8E8E93;
+  --text4:#C7C7CC;
+
+  /* Typography */
+  --font:'Inter',-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif;
+  --mono:'IBM Plex Mono','SF Mono',ui-monospace,monospace;
+
+  /* Shape */
+  --r-sm:10px;
+  --r:14px;
+  --r-lg:18px;
+  --r-xl:22px;
+
+  /* Shadow */
+  --sh-sm:0 1px 2px rgba(0,0,0,.04);
+  --sh:0 4px 12px rgba(0,0,0,.06);
+  --sh-lg:0 10px 40px rgba(0,0,0,.12);
 }
 
 html,body,#root,#app{margin:0;padding:0}
@@ -44,6 +81,8 @@ body{
   color:var(--text);
   -webkit-font-smoothing:antialiased;
   -webkit-text-size-adjust:100%;
+  font-feature-settings:"ss01","cv11";
+  letter-spacing:-0.01em;
 }
 .app{
   max-width:430px;
@@ -51,150 +90,391 @@ body{
   background:var(--bg);
   position:relative;
   padding-bottom:calc(90px + env(safe-area-inset-bottom));
+  min-height:100vh;
 }
 
+/* HEADER */
 .hdr{
   position:sticky;top:0;z-index:10;
-  padding:calc(14px + env(safe-area-inset-top)) 20px 12px;
-  border-bottom:1px solid var(--border);
+  padding:calc(12px + env(safe-area-inset-top)) 20px 8px;
   display:flex;align-items:center;justify-content:space-between;
-  background:rgba(247,249,252,.96);
-  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  background:rgba(242,242,247,.85);
+  backdrop-filter:saturate(180%) blur(20px);
+  -webkit-backdrop-filter:saturate(180%) blur(20px);
 }
-.hdr-logo{font-size:15px;font-weight:700;color:var(--text);letter-spacing:-.01em}
-.hdr-sub{font-size:9px;color:var(--text3);margin-top:2px;letter-spacing:.06em;text-transform:uppercase}
-.hdr-sync{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text3)}
-.hdr-btn{background:none;border:none;color:var(--text3);cursor:pointer;font-size:18px;line-height:1;padding:4px;-webkit-tap-highlight-color:transparent}
+.hdr-logo{font-size:17px;font-weight:600;color:var(--text);letter-spacing:-0.02em}
+.hdr-sub{font-size:11px;color:var(--text3);margin-top:1px;font-weight:500}
+.hdr-btn{background:none;border:none;color:var(--text2);cursor:pointer;padding:6px;-webkit-tap-highlight-color:transparent;border-radius:8px}
+.hdr-btn:active{background:var(--surface3)}
 
+/* NAV */
 .nav{
   position:fixed;left:0;right:0;bottom:0;z-index:100;
   max-width:430px;margin:0 auto;
   display:flex;
-  border-top:1px solid var(--border);
-  background:rgba(247,249,252,.98);
-  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  background:rgba(255,255,255,.85);
+  backdrop-filter:saturate(180%) blur(20px);
+  -webkit-backdrop-filter:saturate(180%) blur(20px);
+  border-top:0.5px solid var(--border);
   padding:6px 4px calc(6px + env(safe-area-inset-bottom));
   overflow-x:auto;overflow-y:hidden;
   -webkit-overflow-scrolling:touch;
   scrollbar-width:none;
 }
 .nav::-webkit-scrollbar{display:none;height:0}
-.nav::-webkit-scrollbar{display:none}
-.nb{flex:0 0 auto;min-width:62px;padding:7px 6px 5px;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;border:none;background:none;color:var(--text3);font-size:9px;font-family:var(--font);font-weight:500;transition:color .15s;letter-spacing:.01em;border-radius:10px;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
-.nb.on{color:var(--accent);background:var(--accent-bg)}
+.nb{
+  flex:0 0 auto;min-width:62px;padding:8px 6px 4px;
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+  cursor:pointer;border:none;background:none;
+  color:var(--text3);font-size:10px;font-family:var(--font);font-weight:500;
+  letter-spacing:-0.01em;border-radius:10px;
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation;
+  transition:color .15s;
+}
+.nb.on{color:var(--accent)}
+.nb-dot{
+  width:26px;height:26px;border-radius:8px;
+  background:transparent;
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;
+  transition:background .15s;
+}
+.nb.on .nb-dot{background:var(--accent-bg)}
 
-.content{min-height:100vh}
-.content::-webkit-scrollbar{display:none}
-.tab-spacer{height:24px}
+/* CONTENT */
+.content{min-height:calc(100vh - 70px)}
 
-.section{padding:16px 16px 0}
-.sec-label{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:12px}
-.card{background:var(--surface);border-radius:var(--r);border:1px solid var(--border);box-shadow:var(--shadow-sm);padding:16px}
+/* SECTIONS */
+.section{padding:8px 16px}
+.sec-label{font-size:13px;font-weight:600;color:var(--text3);margin:12px 4px 8px;letter-spacing:-0.01em;text-transform:none}
+.sec-label-uc{font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--text3);margin:20px 4px 10px}
 
+/* CARDS */
+.card{
+  background:var(--surface);
+  border-radius:var(--r-lg);
+  padding:16px;
+}
+.card-row{
+  background:var(--surface);
+  border-radius:var(--r-lg);
+  padding:4px;
+}
+
+/* STAT CARDS */
 .stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.stat{background:var(--surface);border-radius:var(--r);border:1px solid var(--border);box-shadow:var(--shadow-sm);padding:14px 16px;position:relative;overflow:hidden}
-.stat::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--border)}
-.stat-val{font-family:var(--mono);font-size:clamp(18px,5vw,26px);font-weight:500;line-height:1;letter-spacing:-.02em;margin-top:4px}
-.stat-lbl{font-size:9px;color:var(--text3);margin-top:5px;font-weight:600;text-transform:uppercase;letter-spacing:.08em}
-.stat.a::before{background:var(--accent-light)} .stat.a .stat-val{color:var(--accent)}
-.stat.w::before{background:var(--warn)} .stat.w .stat-val{color:var(--warn)}
-.stat.d::before{background:var(--danger)} .stat.d .stat-val{color:var(--danger)}
+.stat{
+  background:var(--surface);
+  border-radius:var(--r-lg);
+  padding:16px;
+  position:relative;
+}
+.stat-header{display:flex;align-items:center;gap:7px;margin-bottom:8px}
+.stat-dot{width:8px;height:8px;border-radius:50%}
+.stat-dot.a{background:var(--accent)}
+.stat-dot.g{background:var(--green)}
+.stat-dot.w{background:var(--orange)}
+.stat-dot.d{background:var(--red)}
+.stat-lbl{font-size:12px;color:var(--text3);font-weight:500;letter-spacing:-0.01em}
+.stat-val{
+  font-size:28px;font-weight:600;
+  color:var(--text);margin:0;
+  letter-spacing:-0.03em;line-height:1;
+  font-variant-numeric:tabular-nums;
+}
+.stat.warn .stat-val{color:var(--orange)}
+.stat.danger .stat-val{color:var(--red)}
+.stat.good .stat-val{color:var(--green)}
 
-.alert{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:var(--r);margin-bottom:8px;background:var(--surface);border:1px solid var(--border);box-shadow:var(--shadow-sm);position:relative;overflow:hidden}
-.alert::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--warn)}
-.alert.out::before{background:var(--danger)}
-.alert-name{font-size:13px;font-weight:600;color:var(--text)}
-.alert-qty{font-size:10px;color:var(--warn);margin-top:2px;font-family:var(--mono)}
-.alert.out .alert-qty{color:var(--danger)}
+/* ROWS */
+.row-list{background:var(--surface);border-radius:var(--r-lg);overflow:hidden;margin-bottom:10px}
+.row{
+  display:flex;align-items:center;gap:12px;
+  padding:14px 16px;cursor:pointer;
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation;
+  transition:background .1s;
+}
+.row:active{background:var(--surface3)}
+.row + .row{border-top:0.5px solid var(--border)}
+.row-ico{
+  width:34px;height:34px;border-radius:9px;
+  background:var(--accent-bg);
+  color:var(--accent);
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;font-size:16px;
+}
+.row-ico.g{background:var(--green-bg);color:var(--green)}
+.row-ico.w{background:var(--orange-bg);color:var(--orange)}
+.row-ico.d{background:var(--red-bg);color:var(--red)}
+.row-ico.p{background:var(--purple-bg);color:var(--purple)}
+.row-main{flex:1;min-width:0}
+.row-title{font-size:15px;font-weight:500;color:var(--text);letter-spacing:-0.01em}
+.row-sub{font-size:12px;color:var(--text3);margin-top:2px;font-variant-numeric:tabular-nums}
+.row-qty{
+  font-family:var(--mono);font-size:17px;font-weight:500;
+  color:var(--text);letter-spacing:-0.02em;flex-shrink:0;
+  font-variant-numeric:tabular-nums;
+}
+.row-qty.g{color:var(--green)}
+.row-qty.w{color:var(--orange)}
+.row-qty.d{color:var(--red)}
+.row-chev{color:var(--text4);font-size:18px;flex-shrink:0}
 
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:12px 20px;border-radius:8px;font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;border:none;transition:all .15s;-webkit-tap-highlight-color:transparent;touch-action:manipulation;letter-spacing:-.01em}
-.btn-p{background:var(--accent);color:#fff;box-shadow:0 1px 3px rgba(27,111,191,.3)}
-.btn-p:active{transform:scale(.97);background:var(--accent-light)}
-.btn-s{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
-.btn-s:active{background:var(--border)}
-.btn-d{background:var(--dbg);color:var(--danger);border:1px solid var(--dborder)}
-.btn-full{width:100%;padding:14px;border-radius:10px}
+/* ALERTS (low stock etc) */
+.alert-row{
+  display:flex;align-items:center;gap:12px;padding:14px 16px;
+  background:var(--surface);border-radius:var(--r-lg);
+  margin-bottom:8px;
+}
+.alert-row.out{background:var(--red-bg)}
+.alert-row.low{background:var(--orange-bg)}
+.alert-ico{flex-shrink:0;font-size:18px}
+.alert-name{font-size:14px;font-weight:500;color:var(--text);letter-spacing:-0.01em}
+.alert-sub{font-size:11px;color:var(--text3);margin-top:2px;font-variant-numeric:tabular-nums}
+.alert-row.out .alert-sub{color:var(--red)}
+.alert-row.low .alert-sub{color:var(--orange)}
+.alert-badge{
+  font-size:10px;font-weight:700;letter-spacing:0.05em;
+  padding:3px 8px;border-radius:6px;flex-shrink:0;
+}
+.badge-low{background:var(--orange);color:#FFF}
+.badge-out{background:var(--red);color:#FFF}
+.badge-a{background:var(--accent);color:#FFF}
+
+/* BUTTONS */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  padding:12px 20px;border-radius:var(--r);
+  font-family:var(--font);font-size:15px;font-weight:500;
+  cursor:pointer;border:none;
+  transition:all .1s;letter-spacing:-0.01em;
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation;
+}
+.btn-p{background:var(--accent);color:#FFF}
+.btn-p:active{background:#0063CC;transform:scale(.97)}
+.btn-s{background:var(--surface3);color:var(--text)}
+.btn-s:active{background:var(--border2)}
+.btn-d{background:var(--red-bg);color:var(--red)}
+.btn-d:active{background:var(--red-border)}
+.btn-full{width:100%;padding:14px;border-radius:var(--r)}
 .btn:disabled{opacity:.4;cursor:not-allowed}
 
+/* INPUTS */
 .ig{margin-bottom:14px}
-.lbl{display:block;font-size:10px;font-weight:600;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.07em}
-.inp{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:12px 14px;font-family:var(--font);font-size:16px;outline:none;transition:border-color .15s,box-shadow .15s;-webkit-appearance:none;box-shadow:var(--shadow-sm)}
-.inp:focus{border-color:var(--accent-light);box-shadow:0 0 0 3px var(--accent-bg)}
-.inp::placeholder{color:var(--text3)}
+.lbl{
+  display:block;font-size:13px;font-weight:500;
+  color:var(--text2);margin-bottom:6px;letter-spacing:-0.01em;
+}
+.inp{
+  width:100%;background:var(--surface);
+  border:none;color:var(--text);
+  border-radius:var(--r);
+  padding:14px 16px;font-family:var(--font);font-size:16px;
+  outline:none;transition:background .15s;
+  -webkit-appearance:none;letter-spacing:-0.01em;
+}
+.inp:focus{background:var(--surface2)}
+.inp::placeholder{color:var(--text4)}
 
-.prow{display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s;background:var(--surface);-webkit-tap-highlight-color:transparent;touch-action:manipulation}
-.prow:active{background:var(--surface2)}
-.pico{width:36px;height:36px;background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px}
-.pname{font-weight:600;font-size:14px;line-height:1.3;letter-spacing:-.01em;color:var(--text)}
-.psub{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:3px}
-.pqty{font-family:var(--mono);font-size:20px;font-weight:500;flex-shrink:0;letter-spacing:-.02em}
-.pqty.a{color:var(--accent)} .pqty.w{color:var(--warn)} .pqty.d{color:var(--danger)}
+/* SCAN BOX */
+.scanbox{
+  background:var(--surface);
+  border-radius:var(--r-lg);
+  padding:40px 20px;
+  text-align:center;cursor:pointer;
+  border:2px dashed var(--border2);
+  transition:all .15s;
+}
+.scanbox:active{background:var(--accent-bg);border-color:var(--accent)}
 
-.badge{display:inline-flex;align-items:center;padding:3px 8px;border-radius:6px;font-size:9px;font-weight:700;letter-spacing:.05em;text-transform:uppercase}
-.badge-w{background:var(--wbg);color:var(--warn);border:1px solid var(--wborder)}
-.badge-d{background:var(--dbg);color:var(--danger);border:1px solid var(--dborder)}
-.badge-a{background:var(--accent-bg);color:var(--accent);border:1px solid var(--accent-border)}
-
-.scanbox{background:var(--surface);border:1.5px dashed var(--border);border-radius:var(--r);padding:32px 20px;text-align:center;cursor:pointer;transition:all .2s;box-shadow:var(--shadow-sm)}
-.scanbox:active{border-color:var(--accent-light);background:var(--accent-bg)}
-.cam{width:100%;aspect-ratio:4/3;background:#000;border-radius:10px;overflow:hidden;position:relative}
+/* CAMERA */
+.cam{width:100%;aspect-ratio:4/3;background:#000;border-radius:var(--r);overflow:hidden;position:relative}
 .cam video{width:100%;height:100%;object-fit:cover}
-.scanline{position:absolute;left:10%;right:10%;height:2px;background:var(--accent-light);box-shadow:0 0 8px var(--accent-light);animation:sl 2s ease-in-out infinite}
+.scanline{position:absolute;left:10%;right:10%;height:2px;background:var(--accent);box-shadow:0 0 8px var(--accent);animation:sl 2s ease-in-out infinite}
 @keyframes sl{0%,100%{top:12%}50%{top:84%}}
 
-.res-card{background:var(--accent-bg);border:1px solid var(--accent-border);border-left:3px solid var(--accent-light);border-radius:var(--r);padding:16px;margin-bottom:14px}
-.res-name{font-weight:700;font-size:16px;letter-spacing:-.01em;color:var(--text)}
-.res-sub{font-family:var(--mono);font-size:11px;color:var(--accent);margin-top:4px}
-.res-card.bad{background:var(--dbg);border-color:var(--dborder);border-left-color:var(--danger)}
-.res-card.bad .res-sub{color:var(--danger)}
+/* RESULT CARD */
+.res-card{
+  background:var(--accent-bg);
+  border-radius:var(--r-lg);
+  padding:18px;
+  margin-bottom:14px;
+}
+.res-name{font-size:17px;font-weight:600;letter-spacing:-0.02em;color:var(--text)}
+.res-sub{font-family:var(--mono);font-size:12px;color:var(--accent);margin-top:4px;font-variant-numeric:tabular-nums}
+.res-card.bad{background:var(--red-bg)}
+.res-card.bad .res-sub{color:var(--red)}
 
-.overlay{position:fixed;inset:0;background:rgba(15,31,51,.35);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);z-index:50;display:flex;align-items:flex-end;animation:fo .2s}
+/* MODALS */
+.overlay{
+  position:fixed;top:0;left:0;right:0;bottom:0;
+  background:rgba(0,0,0,.4);
+  -webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);
+  z-index:50;display:flex;align-items:flex-end;
+  animation:fo .25s ease;
+  overflow-y:auto;-webkit-overflow-scrolling:touch;
+}
 @keyframes fo{from{opacity:0}to{opacity:1}}
-.modal{background:var(--surface);border-radius:20px 20px 0 0;border-top:1px solid var(--border);padding:20px 20px calc(20px + env(safe-area-inset-bottom));width:100%;max-height:92vh;overflow-y:auto;animation:su .22s ease;box-shadow:var(--shadow-lg);-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
-@keyframes su{from{transform:translateY(40px)}to{transform:translateY(0)}}
-.handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 16px}
-.mtitle{font-size:18px;font-weight:700;letter-spacing:-.02em;color:var(--text)}
+.modal{
+  background:var(--surface);
+  border-radius:var(--r-xl) var(--r-xl) 0 0;
+  padding:20px 20px calc(40px + env(safe-area-inset-bottom));
+  width:100%;
+  max-height:85vh;max-height:85dvh;
+  overflow-y:auto;
+  animation:su .3s cubic-bezier(.2,.8,.2,1);
+  box-shadow:var(--sh-lg);
+  -webkit-overflow-scrolling:touch;overscroll-behavior:contain;
+}
+@keyframes su{from{transform:translateY(60px)}to{transform:translateY(0)}}
+.handle{width:36px;height:5px;background:var(--border2);border-radius:3px;margin:0 auto 20px}
+.mtitle{font-size:22px;font-weight:600;letter-spacing:-0.03em;color:var(--text)}
 
-.toast{position:fixed;top:calc(16px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);padding:11px 18px;border-radius:10px;font-size:13px;font-weight:600;z-index:99;animation:tf .2s ease;box-shadow:var(--shadow-lg);max-width:90vw;text-align:center}
-@keyframes tf{from{opacity:0;transform:translateX(-50%) translateY(-8px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
-.toast.success{background:var(--text);color:#fff}
-.toast.error{background:var(--danger);color:#fff}
+/* TOASTS */
+.toast{
+  position:fixed;top:calc(16px + env(safe-area-inset-top));left:50%;
+  transform:translateX(-50%);
+  padding:12px 20px;border-radius:var(--r);
+  font-size:14px;font-weight:500;z-index:99;
+  animation:tf .25s cubic-bezier(.2,.8,.2,1);
+  box-shadow:var(--sh-lg);max-width:90vw;text-align:center;
+  letter-spacing:-0.01em;
+}
+@keyframes tf{from{opacity:0;transform:translateX(-50%) translateY(-12px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+.toast.success{background:var(--text);color:#FFF}
+.toast.error{background:var(--red);color:#FFF}
 
-.spin{width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--accent-light);border-radius:50%;animation:sp .7s linear infinite;flex-shrink:0;display:inline-block}
+/* LOADER */
+.spin{
+  width:18px;height:18px;
+  border:2.5px solid var(--border);border-top-color:var(--accent);
+  border-radius:50%;animation:sp .7s linear infinite;flex-shrink:0;display:inline-block;
+}
 @keyframes sp{to{transform:rotate(360deg)}}
-.loader{display:flex;align-items:center;justify-content:center;gap:8px;padding:32px;color:var(--text3);font-size:13px}
+.loader{display:flex;align-items:center;justify-content:center;gap:10px;padding:40px;color:var(--text3);font-size:14px}
 
-.empty{text-align:center;padding:56px 24px;color:var(--text3)}
-.empty-ico{font-size:40px;margin-bottom:12px}
-.empty-t{font-size:15px;font-weight:600;color:var(--text);margin-bottom:6px;letter-spacing:-.01em}
+/* EMPTY */
+.empty{text-align:center;padding:60px 24px;color:var(--text3)}
+.empty-ico{font-size:44px;margin-bottom:16px}
+.empty-t{font-size:16px;font-weight:600;color:var(--text);margin-bottom:6px;letter-spacing:-0.02em}
+.empty-s{font-size:13px;color:var(--text3);max-width:260px;margin:0 auto;line-height:1.5}
 
-.setup{min-height:100vh;min-height:-webkit-fill-available;display:flex;flex-direction:column;justify-content:center;padding:32px 24px;background:var(--bg);overflow-y:auto}
-.setup-logo{font-size:22px;font-weight:700;color:var(--text);letter-spacing:-.02em}
-.step-card{background:var(--surface);border-radius:var(--r);border:1px solid var(--border);box-shadow:var(--shadow-sm);padding:14px 16px;margin-bottom:10px}
-.step-n{font-size:9px;font-weight:700;color:var(--accent);margin-bottom:4px;letter-spacing:.1em;text-transform:uppercase}
-.step-t{font-size:13px;line-height:1.7;color:var(--text)}
-.sql{background:var(--text);color:#A8D4F5;border-radius:10px;padding:14px;font-family:var(--mono);font-size:10.5px;line-height:1.7;white-space:pre-wrap;overflow-x:auto;max-height:190px;overflow-y:auto}
-.copy-btn{padding:7px 14px;font-size:12px;font-family:var(--font);font-weight:600;border-radius:8px;cursor:pointer;background:var(--surface2);border:1px solid var(--border);color:var(--text);margin-top:8px;transition:all .15s;touch-action:manipulation}
+/* SETUP */
+.setup{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:32px 24px;background:var(--bg);overflow-y:auto}
+.setup-logo{font-size:28px;font-weight:700;color:var(--text);letter-spacing:-0.03em}
+.step-card{background:var(--surface);border-radius:var(--r-lg);padding:16px;margin-bottom:12px}
+.step-n{font-size:11px;font-weight:600;color:var(--accent);margin-bottom:4px;letter-spacing:.08em;text-transform:uppercase}
+.step-t{font-size:14px;line-height:1.6;color:var(--text);letter-spacing:-0.01em}
+.sql{background:#1C1C1E;color:#A8D4F5;border-radius:var(--r);padding:14px;font-family:var(--mono);font-size:11px;line-height:1.6;white-space:pre-wrap;overflow-x:auto;max-height:200px;overflow-y:auto}
 
-.inv-item{display:flex;gap:10px;align-items:flex-start;padding:13px;background:var(--surface);border-radius:10px;margin-bottom:8px;border:1px solid var(--border);box-shadow:var(--shadow-sm)}
-.inv-chk{accent-color:var(--accent);width:18px;height:18px;margin-top:2px;flex-shrink:0;cursor:pointer}
-
-.sbar{padding:10px 16px;position:sticky;top:0;background:rgba(247,249,252,.95);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);z-index:5;border-bottom:1px solid var(--border)}
-.div{height:1px;background:var(--border);margin:14px 0}
-.tab-in{animation:ti .18s ease}
-@keyframes ti{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
-
-.pin-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;padding:24px;background:var(--bg);min-height:100vh;min-height:-webkit-fill-available}
-.pin-dots{display:flex;gap:16px;margin-bottom:32px}
-.pin-dot{width:14px;height:14px;border-radius:50%;background:var(--surface2);border:2px solid var(--border);transition:all .2s}
-.pin-dot.filled{background:var(--accent);border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-bg)}
-.pin-dot.error{background:var(--danger);border-color:var(--danger)}
+/* PIN SCREEN */
+.pin-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;padding:24px;background:var(--bg);min-height:100vh}
+.pin-logo{
+  width:64px;height:64px;margin:0 auto 16px;border-radius:16px;
+  background:var(--accent);display:flex;align-items:center;justify-content:center;
+  font-size:30px;font-weight:700;color:#FFF;font-family:var(--mono);
+  letter-spacing:-0.04em;
+}
+.pin-dots{display:flex;gap:18px;margin-bottom:40px}
+.pin-dot{width:14px;height:14px;border-radius:50%;background:var(--border2);transition:all .2s}
+.pin-dot.filled{background:var(--accent);transform:scale(1.15)}
+.pin-dot.error{background:var(--red)}
 .keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:240px}
-.key{height:64px;border-radius:14px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:22px;font-weight:500;cursor:pointer;font-family:var(--mono);transition:all .12s;box-shadow:var(--shadow-sm);-webkit-tap-highlight-color:transparent;touch-action:manipulation}
-.key:active{background:var(--surface2);transform:scale(.95);box-shadow:none}
-.key.empty{background:transparent;border:none;box-shadow:none;cursor:default}
-.key.del{color:var(--text3);font-size:12px;font-weight:600;font-family:var(--font);letter-spacing:.1em}
+.key{
+  height:64px;border-radius:18px;border:none;
+  background:var(--surface);color:var(--text);
+  font-size:26px;font-weight:400;
+  cursor:pointer;font-family:var(--font);
+  transition:all .08s;-webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
+}
+.key:active{background:var(--surface3);transform:scale(.94)}
+.key.empty{background:transparent;cursor:default}
+.key.del{color:var(--text3);font-size:13px;font-weight:500;letter-spacing:.08em}
 @keyframes pinshake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+
+/* SKULL ALARM */
+.skull-overlay{
+  position:fixed;inset:0;z-index:9999;
+  background:rgba(255,59,48,.3);
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+  display:flex;align-items:center;justify-content:center;
+  padding:20px;
+  animation:skullpulse 0.4s ease-in-out infinite alternate;
+}
+@keyframes skullpulse{
+  from{background:rgba(255,59,48,.3);}
+  to{background:rgba(255,59,48,.5);}
+}
+.skull-modal{
+  background:#FFF;border-radius:var(--r-xl);
+  max-width:340px;width:100%;
+  padding:28px 24px;text-align:center;
+  box-shadow:0 0 0 4px var(--red),0 20px 60px rgba(255,59,48,.4);
+  animation:skullshake .6s cubic-bezier(.36,.07,.19,.97) both;
+}
+@keyframes skullshake{
+  10%,90%{transform:translate3d(-2px,0,0) rotate(-1deg)}
+  20%,80%{transform:translate3d(4px,0,0) rotate(2deg)}
+  30%,50%,70%{transform:translate3d(-8px,0,0) rotate(-2deg)}
+  40%,60%{transform:translate3d(8px,0,0) rotate(2deg)}
+}
+.skull-svg{width:80px;height:80px;margin:0 auto 12px;animation:skullbob 0.8s ease-in-out infinite alternate}
+@keyframes skullbob{from{transform:translateY(0)}to{transform:translateY(-6px)}}
+.skull-title{font-size:28px;font-weight:700;color:var(--red);letter-spacing:-0.03em;margin:0 0 4px;text-transform:uppercase;font-family:var(--mono)}
+.skull-msg{font-size:15px;color:var(--text);margin:12px 0 20px;line-height:1.4;font-weight:500}
+.skull-product{font-size:18px;font-weight:700;color:var(--text);margin:6px 0}
+.skull-stock{font-family:var(--mono);font-size:13px;color:var(--text3);margin-bottom:16px;font-variant-numeric:tabular-nums}
+
+/* EASTER EGGS */
+.egg-badge{
+  display:inline-block;
+  padding:3px 10px;border-radius:8px;
+  background:var(--purple-bg);color:var(--purple);
+  font-size:11px;font-weight:600;letter-spacing:-0.01em;
+  margin-left:6px;vertical-align:middle;
+}
+.confetti{position:fixed;inset:0;pointer-events:none;z-index:9998;overflow:hidden}
+.confetti-piece{position:absolute;width:10px;height:10px;animation:fall 3s linear forwards}
+@keyframes fall{to{transform:translateY(100vh) rotate(720deg);opacity:0}}
+
+/* MISC */
+.div{height:0.5px;background:var(--border);margin:14px 0}
+.tab-in{animation:ti .2s ease}
+@keyframes ti{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+.sbar{
+  padding:8px 16px 4px;position:sticky;top:54px;
+  background:rgba(242,242,247,.85);
+  backdrop-filter:saturate(180%) blur(20px);
+  -webkit-backdrop-filter:saturate(180%) blur(20px);
+  z-index:5;
+}
+.tab-spacer{height:24px}
+
+/* GREETING */
+.greeting{padding:16px 20px 4px}
+.greet-day{font-size:11px;color:var(--text3);letter-spacing:.06em;text-transform:uppercase;font-weight:600;margin-bottom:4px}
+.greet-title{font-size:30px;font-weight:600;color:var(--text);letter-spacing:-0.03em;line-height:1.1}
+.greet-name{color:var(--accent)}
+
+/* CHECKBOX ITEM */
+.inv-item{display:flex;gap:12px;align-items:flex-start;padding:14px;background:var(--surface);border-radius:var(--r-lg);margin-bottom:8px}
+.inv-chk{accent-color:var(--accent);width:20px;height:20px;margin-top:2px;flex-shrink:0;cursor:pointer}
+
+/* HELPER */
+.chip{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:7px 14px;border-radius:12px;
+  background:var(--surface);color:var(--text);
+  font-size:13px;font-weight:500;cursor:pointer;
+  letter-spacing:-0.01em;
+  transition:all .1s;
+  border:none;
+  -webkit-tap-highlight-color:transparent;
+}
+.chip.on{background:var(--accent);color:#FFF}
+.chip:active{transform:scale(.96)}
 `;
 
 // ─────────────────────────────────────────────────────────────────────
@@ -270,8 +550,23 @@ async function loadAll(cfg: any) {
   return data || [];
 }
 
+// Normalize barcode: strip anything that isn't a digit (removes spaces, dashes, etc.)
+function cleanBarcode(raw: string): string {
+  return (raw || '').replace(/[^0-9]/g, '');
+}
+
+// Defensive: handle inventory as array OR object OR missing
+function getOnHand(p: any): number {
+  if (!p) return 0;
+  const inv = p.inventory;
+  if (!inv) return 0;
+  if (Array.isArray(inv)) return inv[0]?.on_hand ?? 0;
+  if (typeof inv === 'object') return inv.on_hand ?? 0;
+  return 0;
+}
+
 function stockStatus(p: any): 'a' | 'w' | 'd' {
-  const qty = p.inventory?.[0]?.on_hand ?? 0;
+  const qty = getOnHand(p);
   const thr = p.reorder_threshold ?? 10;
   if (qty === 0) return 'd';
   if (qty <= thr) return 'w';
@@ -342,8 +637,46 @@ async function fileToBase64(file: File): Promise<string> {
 // ANTHROPIC AI CALL (centralised)
 // ─────────────────────────────────────────────────────────────────────
 async function callClaude(messages: any[], maxTokens: number = 1000): Promise<string> {
+  // Try the Netlify Function proxy FIRST (server-side, secure)
+  // If it's not deployed / not configured, fall back to the user's localStorage key
+
+  const body = JSON.stringify({
+    model: AI_MODEL,
+    max_tokens: maxTokens,
+    messages,
+  });
+
+  // Attempt proxy first
+  try {
+    const proxyRes = await fetch('/.netlify/functions/claude', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body,
+    });
+
+    // If the proxy is deployed and working (200 or known error codes), use it
+    if (proxyRes.status !== 404) {
+      if (!proxyRes.ok) {
+        const err = await proxyRes.json().catch(() => ({}));
+        throw new Error(err?.error?.message || err?.error || `Proxy error ${proxyRes.status}`);
+      }
+      const data = await proxyRes.json();
+      return data.content?.[0]?.text?.trim() || '';
+    }
+    // 404 means proxy isn't deployed → fall through to direct mode
+  } catch (e: any) {
+    // Network error trying proxy → fall through to direct mode too
+    // But re-throw if this was a real API error (not a missing proxy)
+    if (e?.message && !e.message.includes('fetch') && !e.message.includes('404')) {
+      throw e;
+    }
+  }
+
+  // Fallback: use personal API key from Settings
   const apiKey = localStorage.getItem('skynet_api_key');
-  if (!apiKey) throw new Error('No API key — add one in Settings');
+  if (!apiKey) {
+    throw new Error('AI unavailable — either deploy the Netlify proxy or add an API key in Settings');
+  }
 
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -353,11 +686,7 @@ async function callClaude(messages: any[], maxTokens: number = 1000): Promise<st
       'anthropic-version': '2023-06-01',
       'anthropic-dangerous-direct-browser-access': 'true',
     },
-    body: JSON.stringify({
-      model: AI_MODEL,
-      max_tokens: maxTokens,
-      messages,
-    }),
+    body,
   });
 
   if (!res.ok) {
@@ -414,10 +743,177 @@ CREATE POLICY "all" ON products FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "all" ON inventory FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "all" ON transactions FOR ALL USING (true) WITH CHECK (true);`;
 
+
+// ─────────────────────────────────────────────────────────────────────
+// EASTER EGGS & REWARDS
+// ─────────────────────────────────────────────────────────────────────
+const BOSS_GREETINGS = [
+  "Good morning, boss ☀️",
+  "Hey, Employee of the Year 🏆",
+  "Welcome back, legend",
+  "Mapleton's finest is on deck",
+  "Your pharmacy kingdom awaits",
+  "Good to see you, captain",
+  "Running a tight ship, as always",
+  "The GOAT has arrived",
+  "Making Mapleton magic happen",
+  "Best boss in New Brunswick? Probably.",
+];
+
+const BOSS_COMPLIMENTS = [
+  "Impeccable inventory management",
+  "Another day of running it perfectly",
+  "Pharmacy of the Year material, honestly",
+  "Your staff must love working here",
+  "This is what excellence looks like",
+];
+
+const BOSS_EMPTY_STATES = [
+  "All stock healthy — just like how you run this place",
+  "Everything's in order, of course. Why would it not be?",
+  "Zero alerts. Typical. You've got this nailed.",
+];
+
+function pickRandom<T>(arr: T[]): T {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function getGreeting(): string {
+  const hour = new Date().getHours();
+  const isEasterEgg = Math.random() < 0.05; // 1 in 20 — rare, stays special
+  if (isEasterEgg) return pickRandom(BOSS_GREETINGS);
+  if (hour < 12) return "Good morning";
+  if (hour < 18) return "Good afternoon";
+  return "Good evening";
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// SKULL & CROSSBONES REORDER ALARM — over-the-top with sound
+// ─────────────────────────────────────────────────────────────────────
+function playAlarmSound() {
+  try {
+    const AC = (window as any).AudioContext || (window as any).webkitAudioContext;
+    if (!AC) return;
+    const ctx = new AC();
+    const now = ctx.currentTime;
+
+    // Alternating two-tone alarm (like emergency klaxon)
+    const beep = (freq: number, start: number, duration: number) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(freq, now + start);
+      gain.gain.setValueAtTime(0, now + start);
+      gain.gain.linearRampToValueAtTime(0.3, now + start + 0.01);
+      gain.gain.setValueAtTime(0.3, now + start + duration - 0.02);
+      gain.gain.linearRampToValueAtTime(0, now + start + duration);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now + start);
+      osc.stop(now + start + duration);
+    };
+
+    // 4 pairs of alternating tones — over the top
+    for (let i = 0; i < 4; i++) {
+      beep(880, i * 0.36,       0.15);
+      beep(660, i * 0.36 + 0.18, 0.15);
+    }
+  } catch {}
+}
+
+function SkullAlarm({ productName, newQty, threshold, onClose }: any) {
+  useEffect(() => {
+    playAlarmSound();
+    // Vibrate on mobile if supported
+    try { (navigator as any).vibrate?.([200, 100, 200, 100, 400]); } catch {}
+  }, []);
+
+  return (
+    <div className="skull-overlay" onClick={onClose}>
+      <div className="skull-modal" onClick={e => e.stopPropagation()}>
+        <svg className="skull-svg" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+          {/* Skull */}
+          <ellipse cx="32" cy="26" rx="18" ry="20" fill="#FFF" stroke="#000" strokeWidth="2"/>
+          <rect x="24" y="44" width="16" height="8" rx="2" fill="#FFF" stroke="#000" strokeWidth="2"/>
+          {/* Eyes */}
+          <ellipse cx="25" cy="26" rx="4" ry="5" fill="#000"/>
+          <ellipse cx="39" cy="26" rx="4" ry="5" fill="#000"/>
+          {/* Nose */}
+          <path d="M 32 32 L 29 38 L 35 38 Z" fill="#000"/>
+          {/* Teeth */}
+          <line x1="28" y1="44" x2="28" y2="52" stroke="#000" strokeWidth="1.5"/>
+          <line x1="32" y1="44" x2="32" y2="52" stroke="#000" strokeWidth="1.5"/>
+          <line x1="36" y1="44" x2="36" y2="52" stroke="#000" strokeWidth="1.5"/>
+          {/* Crossbones */}
+          <g transform="translate(32 54) rotate(45)">
+            <rect x="-20" y="-3" width="40" height="6" rx="3" fill="#FFF" stroke="#000" strokeWidth="2"/>
+            <circle cx="-20" cy="0" r="5" fill="#FFF" stroke="#000" strokeWidth="2"/>
+            <circle cx="20" cy="0" r="5" fill="#FFF" stroke="#000" strokeWidth="2"/>
+          </g>
+          <g transform="translate(32 54) rotate(-45)">
+            <rect x="-20" y="-3" width="40" height="6" rx="3" fill="#FFF" stroke="#000" strokeWidth="2"/>
+            <circle cx="-20" cy="0" r="5" fill="#FFF" stroke="#000" strokeWidth="2"/>
+            <circle cx="20" cy="0" r="5" fill="#FFF" stroke="#000" strokeWidth="2"/>
+          </g>
+        </svg>
+        <div className="skull-title">Reorder Alert</div>
+        <div className="skull-msg">Captain, we're running low on:</div>
+        <div className="skull-product">{productName}</div>
+        <div className="skull-stock">{newQty} left · reorder at {threshold}</div>
+        <button className="btn btn-d btn-full" onClick={onClose} style={{ marginBottom: 8 }}>
+          Acknowledged — I'll order more
+        </button>
+        <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 8, fontStyle: 'italic' }}>
+          Tap anywhere to dismiss
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// CONFETTI
+// ─────────────────────────────────────────────────────────────────────
+function Confetti({ onDone }: any) {
+  useEffect(() => {
+    const timer = setTimeout(onDone, 3000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const colors = ['#FF3B30', '#FF9500', '#FFCC00', '#34C759', '#007AFF', '#AF52DE', '#FF2D92'];
+  const pieces = Array.from({ length: 60 }, (_, i) => ({
+    left: Math.random() * 100,
+    delay: Math.random() * 0.5,
+    color: colors[i % colors.length],
+    size: 6 + Math.random() * 8,
+  }));
+
+  return (
+    <div className="confetti">
+      {pieces.map((p, i) => (
+        <div
+          key={i}
+          className="confetti-piece"
+          style={{
+            left: `${p.left}%`,
+            top: '-20px',
+            background: p.color,
+            width: p.size,
+            height: p.size,
+            borderRadius: i % 2 ? '50%' : '2px',
+            animationDelay: `${p.delay}s`,
+            animationDuration: `${2.5 + Math.random()}s`,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
 // ─────────────────────────────────────────────────────────────────────
 // PIN LOCK SCREEN (reusable for app + settings)
 // ─────────────────────────────────────────────────────────────────────
-function PinScreen({ onUnlock, title = 'SKYNET', subtitle = 'MAPLETON PHARMACY | Enter PIN', expectedPin }: any) {
+function PinScreen({ onUnlock, title = 'SKYNET', subtitle = 'Mapleton Pharmacy · Enter PIN', expectedPin }: any) {
   const [entered, setEntered] = useState('');
   const [error, setError] = useState(false);
   const [shake, setShake] = useState(false);
@@ -444,16 +940,10 @@ function PinScreen({ onUnlock, title = 'SKYNET', subtitle = 'MAPLETON PHARMACY |
 
   return (
     <div className="pin-screen">
-      <div style={{ marginBottom: 32, textAlign: 'center' }}>
-        <div style={{ 
-          width: 56, height: 56, margin: '0 auto 12px', borderRadius: 14,
-          background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-          boxShadow: '0 4px 12px rgba(27,111,191,.3)'
-        }}>
-          <div style={{ color: '#fff', fontSize: 26, fontWeight: 700, fontFamily: 'var(--mono)' }}>S</div>
-        </div>
-        <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--text)', letterSpacing: '-.02em' }}>{title}</div>
-        <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 6, letterSpacing: '.04em' }}>{subtitle}</div>
+      <div style={{ marginBottom: 40, textAlign: 'center' }}>
+        <div className="pin-logo">S</div>
+        <div style={{ fontSize: 24, fontWeight: 600, color: 'var(--text)', letterSpacing: '-0.03em' }}>{title}</div>
+        <div style={{ fontSize: 13, color: 'var(--text3)', marginTop: 6, letterSpacing: '-0.01em' }}>{subtitle}</div>
       </div>
 
       <div className="pin-dots" style={{ animation: shake ? 'pinshake .4s ease' : 'none' }}>
@@ -713,7 +1203,7 @@ function BarcodeScannerSheet({ onCode, onClose }: { onCode: (code: string) => vo
             const codes = await det.detect(videoRef.current);
             if (codes.length > 0) {
               stopCamera();
-              onCode(codes[0].rawValue);
+              onCode(cleanBarcode(codes[0].rawValue));
             }
           } catch {}
         }, 300);
@@ -736,14 +1226,20 @@ function BarcodeScannerSheet({ onCode, onClose }: { onCode: (code: string) => vo
         role: 'user',
         content: [
           { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: base64 } },
-          { type: 'text', text: 'Read the barcode/UPC/EAN/NDC code in this image. Reply with ONLY the numeric code. If none found, reply NONE.' },
+          { type: 'text', text: 'Read the barcode/UPC/EAN/NDC code in this image. Reply with ONLY the digits, no spaces, no dashes, no other characters. If no barcode is visible, reply exactly: NONE' },
         ],
       }], 100);
       if (!code || code === 'NONE') {
         setError('No barcode found in photo');
         setMode('options');
       } else {
-        onCode(code);
+        const cleaned = cleanBarcode(code);
+        if (!cleaned) {
+          setError('Could not read barcode clearly');
+          setMode('options');
+        } else {
+          onCode(cleaned);
+        }
       }
     } catch (err: any) {
       setError(err?.message || 'Unknown error');
@@ -877,12 +1373,16 @@ function QuickAddModal({ upc, cfg, onRefresh, showToast, onClose }: any) {
 }
 
 // ─────────────────────────────────────────────────────────────────────
-// DASHBOARD
+// DASHBOARD — Clarity design
 // ─────────────────────────────────────────────────────────────────────
-function Dashboard({ products, setTab }: any) {
+function Dashboard({ products, setTab, showToast }: any) {
+  const [greeting] = useState(() => getGreeting());
+  const [showCertificate, setShowCertificate] = useState(false);
+  const [logoTaps, setLogoTaps] = useState(0);
+
   const enriched = products.map((p: any) => ({
     ...p,
-    qty: p.inventory?.[0]?.on_hand ?? 0,
+    qty: getOnHand(p),
     status: stockStatus(p),
   }));
   const totalSkus = products.length;
@@ -891,94 +1391,173 @@ function Dashboard({ products, setTab }: any) {
   const totalVal = enriched.reduce((s: number, p: any) => s + (p.qty * (p.cost_per_unit ?? 0)), 0);
   const alerts = enriched.filter((p: any) => p.status !== 'a').sort((a: any, b: any) => a.qty - b.qty);
 
+  function handleLogoTap() {
+    const next = logoTaps + 1;
+    setLogoTaps(next);
+    if (next >= 5) {
+      setShowCertificate(true);
+      setLogoTaps(0);
+    }
+    setTimeout(() => setLogoTaps(0), 2000);
+  }
+
+  const todayStr = new Date().toLocaleDateString('en-CA', {
+    weekday: 'long', month: 'long', day: 'numeric'
+  }).toUpperCase();
+
   return (
     <div className="tab-in">
-      <div className="section" style={{ paddingTop: 18 }}>
+      {/* Greeting */}
+      <div className="greeting" onClick={handleLogoTap}>
+        <div className="greet-day">{todayStr}</div>
+        <div className="greet-title">
+          {greeting}<span className="greet-name">{greeting.includes(",") || greeting.includes("?") ? "" : ", John."}</span>
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div className="section" style={{ paddingTop: 16 }}>
         <div className="stats">
-          <div className="stat a">
+          <div className="stat">
+            <div className="stat-header">
+              <div className="stat-dot g" />
+              <div className="stat-lbl">Products</div>
+            </div>
             <div className="stat-val">{totalSkus}</div>
-            <div className="stat-lbl">Total SKUs</div>
           </div>
           <div className="stat">
-            <div className="stat-val" style={{ fontSize: totalVal >= 10000 ? 18 : 22 }}>
+            <div className="stat-header">
+              <div className="stat-dot a" />
+              <div className="stat-lbl">Inventory value</div>
+            </div>
+            <div className="stat-val" style={{ fontSize: totalVal >= 100000 ? 22 : 26 }}>
               ${totalVal.toLocaleString('en', { maximumFractionDigits: 0 })}
             </div>
-            <div className="stat-lbl">Inventory Value</div>
           </div>
-          <div className="stat w">
+          <div className={`stat ${lowStock > 0 ? 'warn' : ''}`}>
+            <div className="stat-header">
+              <div className="stat-dot w" />
+              <div className="stat-lbl">Low stock</div>
+            </div>
             <div className="stat-val">{lowStock}</div>
-            <div className="stat-lbl">Low Stock</div>
           </div>
-          <div className="stat d">
+          <div className={`stat ${outStock > 0 ? 'danger' : ''}`}>
+            <div className="stat-header">
+              <div className="stat-dot d" />
+              <div className="stat-lbl">Out of stock</div>
+            </div>
             <div className="stat-val">{outStock}</div>
-            <div className="stat-lbl">Out of Stock</div>
           </div>
         </div>
       </div>
 
-      {/* Quick action buttons */}
-      <div className="section" style={{ paddingTop: 16 }}>
-        <div className="sec-label">Quick Actions</div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-          <button className="btn btn-s" onClick={() => setTab('scan')} style={{ padding: '14px 8px', flexDirection: 'column' as const, gap: 4 }}>
-            <span style={{ fontSize: 22 }}>📷</span>
-            <span style={{ fontSize: 11 }}>Scan & Count</span>
-          </button>
-          <button className="btn btn-s" onClick={() => setTab('receive')} style={{ padding: '14px 8px', flexDirection: 'column' as const, gap: 4 }}>
-            <span style={{ fontSize: 22 }}>📦</span>
-            <span style={{ fontSize: 11 }}>Receive Stock</span>
-          </button>
-          <button className="btn btn-s" onClick={() => setTab('dispense')} style={{ padding: '14px 8px', flexDirection: 'column' as const, gap: 4 }}>
-            <span style={{ fontSize: 22 }}>➖</span>
-            <span style={{ fontSize: 11 }}>Use / Dispense</span>
-          </button>
-          <button className="btn btn-s" onClick={() => setTab('invoice')} style={{ padding: '14px 8px', flexDirection: 'column' as const, gap: 4 }}>
-            <span style={{ fontSize: 22 }}>🧾</span>
-            <span style={{ fontSize: 11 }}>AI Invoice</span>
-          </button>
+      {/* Quick actions */}
+      <div className="section">
+        <div className="sec-label-uc">Quick actions</div>
+        <div className="card-row">
+          <div className="row" onClick={() => setTab('scan')}>
+            <div className="row-ico a">📷</div>
+            <div className="row-main">
+              <div className="row-title">Scan a barcode</div>
+              <div className="row-sub">Count inventory fast</div>
+            </div>
+            <div className="row-chev">›</div>
+          </div>
+          <div className="row" onClick={() => setTab('receive')}>
+            <div className="row-ico g">📦</div>
+            <div className="row-main">
+              <div className="row-title">Receive stock</div>
+              <div className="row-sub">Add new arrivals</div>
+            </div>
+            <div className="row-chev">›</div>
+          </div>
+          <div className="row" onClick={() => setTab('dispense')}>
+            <div className="row-ico w">➖</div>
+            <div className="row-main">
+              <div className="row-title">Use or dispense</div>
+              <div className="row-sub">Compounding, dispensing, expired</div>
+            </div>
+            <div className="row-chev">›</div>
+          </div>
+          <div className="row" onClick={() => setTab('invoice')}>
+            <div className="row-ico p">🧾</div>
+            <div className="row-main">
+              <div className="row-title">AI invoice scan</div>
+              <div className="row-sub">Upload PDF or photo</div>
+            </div>
+            <div className="row-chev">›</div>
+          </div>
         </div>
       </div>
 
-      {alerts.length > 0 && (
-        <div className="section" style={{ paddingTop: 20 }}>
-          <div className="sec-label">⚠ Reorder Needed</div>
+      {/* Alerts */}
+      {alerts.length > 0 ? (
+        <div className="section">
+          <div className="sec-label-uc">Needs attention · {alerts.length}</div>
           {alerts.slice(0, 8).map((p: any) => (
-            <div key={p.id} className={`alert ${p.status === 'd' ? 'out' : ''}`}>
-              <span style={{ fontSize: 18 }}>📦</span>
-              <div style={{ flex: 1 }}>
+            <div key={p.id} className={`alert-row ${p.status === 'd' ? 'out' : 'low'}`}>
+              <div className="alert-ico">{p.status === 'd' ? '🚨' : '⚠️'}</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
                 <div className="alert-name">{p.name}</div>
-                <div className="alert-qty">
-                  {p.status === 'd' ? 'OUT OF STOCK' : `${p.qty} left (reorder at ${p.reorder_threshold})`}
+                <div className="alert-sub">
+                  {p.status === 'd' ? 'OUT OF STOCK' : `${p.qty} left · reorder at ${p.reorder_threshold}`}
                 </div>
               </div>
-              <span className={`badge ${p.status === 'd' ? 'badge-d' : 'badge-w'}`}>
+              <div className={`alert-badge ${p.status === 'd' ? 'badge-out' : 'badge-low'}`}>
                 {p.status === 'd' ? 'ORDER' : 'LOW'}
-              </span>
+              </div>
             </div>
           ))}
         </div>
-      )}
-
-      {alerts.length === 0 && totalSkus > 0 && (
-        <div className="section" style={{ paddingTop: 20 }}>
-          <div style={{ background: 'var(--okbg)', border: '1px solid var(--okborder)', borderLeft: '3px solid var(--ok)', borderRadius: 12, padding: 16, textAlign: 'center' }}>
-            <div style={{ fontSize: 28, marginBottom: 8 }}>✅</div>
-            <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--ok)' }}>All Stock Looking Healthy</div>
-            <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 4 }}>Every product is above its reorder threshold.</div>
+      ) : totalSkus > 0 ? (
+        <div className="section">
+          <div style={{ background: 'var(--green-bg)', borderRadius: 'var(--r-lg)', padding: '20px 16px', textAlign: 'center' }}>
+            <div style={{ fontSize: 36, marginBottom: 8 }}>✅</div>
+            <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--green)', letterSpacing: '-0.02em' }}>All stock is healthy</div>
+            <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 4 }}>
+              {pickRandom(BOSS_EMPTY_STATES)}
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="section">
+          <div className="empty">
+            <div className="empty-ico">🏗️</div>
+            <div className="empty-t">No products yet</div>
+            <div className="empty-s">
+              Use the Invoice or Import tabs to bulk-add products, or add them manually in the Products tab.
+            </div>
           </div>
         </div>
       )}
 
-      {totalSkus === 0 && (
-        <div className="section" style={{ paddingTop: 40, textAlign: 'center' }}>
-          <div className="empty-ico">🏗️</div>
-          <div className="empty-t">No products yet</div>
-          <div style={{ fontSize: 13, color: 'var(--text3)' }}>
-            Use the Invoice or Import tabs to get started, or add products manually.
-          </div>
-        </div>
-      )}
       <div className="tab-spacer" />
+
+      {/* Hidden 5-tap certificate */}
+      {showCertificate && (
+        <>
+          <Confetti onDone={() => {}} />
+          <div className="overlay" onClick={() => setShowCertificate(false)}>
+            <div className="modal" onClick={e => e.stopPropagation()}>
+              <div className="handle" />
+              <div style={{ textAlign: 'center', padding: '20px 12px' }}>
+                <div style={{ fontSize: 54, marginBottom: 12 }}>🏆</div>
+                <div style={{ fontSize: 12, letterSpacing: '.15em', color: 'var(--accent)', fontWeight: 700, marginBottom: 8 }}>OFFICIAL CERTIFICATE</div>
+                <div style={{ fontSize: 26, fontWeight: 700, letterSpacing: '-0.03em', color: 'var(--text)', marginBottom: 8 }}>Best Boss Ever</div>
+                <div style={{ fontSize: 14, color: 'var(--text2)', margin: '16px 24px', lineHeight: 1.5 }}>
+                  This certifies that <strong>John</strong> runs Mapleton Pharmacy with unmatched excellence, treats his staff brilliantly, and has earned the unofficial title of Best Pharmacy Boss in the Greater Moncton Area™.
+                </div>
+                <div style={{ fontSize: 11, color: 'var(--text3)', fontStyle: 'italic', marginBottom: 20 }}>
+                  — Signed, Your Inventory Management Software
+                </div>
+                <button className="btn btn-p btn-full" onClick={() => setShowCertificate(false)}>
+                  Aw shucks, thanks 🙏
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -1009,8 +1588,8 @@ function ScanTab({ products, cfg, onRefresh, showToast }: any) {
 
   const lookup = useCallback((code: string) => {
     stopCamera();
-    const clean = code.trim();
-    const p = products.find((pr: any) => pr.upc === clean || pr.ndc === clean);
+    const clean = cleanBarcode(code);
+    const p = products.find((pr: any) => cleanBarcode(pr.upc || '') === clean || cleanBarcode(pr.ndc || '') === clean);
     if (p) { setFound(p); setUpc(clean); setNotFound(false); }
     else { setFound(null); setUpc(clean); setNotFound(true); }
     setMode('result');
@@ -1029,7 +1608,7 @@ function ScanTab({ products, cfg, onRefresh, showToast }: any) {
           if (!videoRef.current || videoRef.current.readyState < 2) return;
           try {
             const codes = await det.detect(videoRef.current);
-            if (codes.length > 0) lookup(codes[0].rawValue);
+            if (codes.length > 0) lookup(cleanBarcode(codes[0].rawValue));
           } catch {}
         }, 300);
       }
@@ -1051,14 +1630,20 @@ function ScanTab({ products, cfg, onRefresh, showToast }: any) {
         role: 'user',
         content: [
           { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: base64 } },
-          { type: 'text', text: 'Read the barcode/UPC/EAN/NDC code. Reply with ONLY the code or NONE.' },
+          { type: 'text', text: 'Read the barcode/UPC/EAN/NDC code. Reply with ONLY the digits, no spaces or dashes. If none found, reply exactly: NONE' },
         ],
       }], 100);
       if (!code || code === 'NONE') {
         setUpc('');
         showToast('No barcode found', 'error');
       } else {
-        lookup(code);
+        const cleaned = cleanBarcode(code);
+        if (!cleaned) {
+          setUpc('');
+          showToast('Could not read barcode clearly', 'error');
+        } else {
+          lookup(cleaned);
+        }
       }
     } catch (err: any) {
       setUpc('');
@@ -1196,7 +1781,7 @@ function ScanTab({ products, cfg, onRefresh, showToast }: any) {
                   <div>
                     <div style={{ fontSize: 10, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '.06em' }}>On Hand</div>
                     <div style={{ fontFamily: 'var(--mono)', fontSize: 24, fontWeight: 600, color: 'var(--accent)' }}>
-                      {found?.inventory?.[0]?.on_hand ?? 0}
+                      {getOnHand(found)}
                     </div>
                   </div>
                   <div>
@@ -1256,9 +1841,9 @@ function ProductsTab({ products, cfg, onRefresh, showToast }: any) {
   return (
     <div className="tab-in">
       <div className="sbar">
-        <div style={{ display: 'flex', gap: 8 }}>
-          <input className="inp" placeholder="Search name, UPC, vendor..." value={search} onChange={e => setSearch(e.target.value)} style={{ flex: 1 }} />
-          <button className="btn btn-p" style={{ padding: '10px 14px', flexShrink: 0 }} onClick={() => setShowAdd(true)}>+ Add</button>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <input className="inp" placeholder="Search products..." value={search} onChange={e => setSearch(e.target.value)} style={{ flex: 1 }} />
+          <button className="btn btn-p" style={{ padding: '10px 16px', flexShrink: 0, fontSize: 14 }} onClick={() => setShowAdd(true)}>+ Add</button>
         </div>
       </div>
 
@@ -1274,20 +1859,22 @@ function ProductsTab({ products, cfg, onRefresh, showToast }: any) {
         </div>
       )}
 
-      {filtered.map((p: any) => {
-        const qty = p.inventory?.[0]?.on_hand ?? 0;
-        const st = stockStatus(p);
-        return (
-          <div key={p.id} className="prow" onClick={() => { setDetail(p); setEditing(false); }}>
-            <div className="pico">💊</div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div className="pname">{p.name}</div>
-              <div className="psub">{p.upc || p.ndc || 'No barcode'} | {p.vendor || '—'}</div>
+      <div className="card-row" style={{ margin: '0 16px' }}>
+        {filtered.map((p: any) => {
+          const qty = getOnHand(p);
+          const st = stockStatus(p);
+          return (
+            <div key={p.id} className="row" onClick={() => { setDetail(p); setEditing(false); }}>
+              <div className={`row-ico ${st === 'd' ? 'd' : st === 'w' ? 'w' : 'a'}`}>💊</div>
+              <div className="row-main">
+                <div className="row-title">{p.name}</div>
+                <div className="row-sub">{p.upc || p.ndc || 'No barcode'} · {p.vendor || '—'}</div>
+              </div>
+              <div className={`row-qty ${st}`}>{qty}</div>
             </div>
-            <div className={`pqty ${st}`}>{qty}</div>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
       <div className="tab-spacer" />
 
       {showAdd && (
@@ -1381,7 +1968,7 @@ function AddProductModal({ cfg, onRefresh, showToast, onClose, showScanner, setS
           <BarcodeScannerSheet
             onCode={(code: string) => {
               setShowScanner(false);
-              setForm(x => ({ ...x, upc: code.trim() }));
+              setForm(x => ({ ...x, upc: cleanBarcode(code) }));
               showToast('Barcode scanned!', 'success');
             }}
             onClose={() => setShowScanner(false)}
@@ -1429,10 +2016,10 @@ function ProductDetailModal({ detail, onClose, onEdit }: any) {
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
           {[
-            ['On Hand', detail.inventory?.[0]?.on_hand ?? 0, 'var(--accent)'],
+            ['On Hand', getOnHand(detail), 'var(--accent)'],
             ['Unit Cost', formatCurrency(detail.cost_per_unit ?? 0), null],
             ['Reorder At', detail.reorder_threshold ?? 10, 'var(--warn)'],
-            ['Total Value', formatCurrency((detail.inventory?.[0]?.on_hand ?? 0) * (detail.cost_per_unit ?? 0)), null],
+            ['Total Value', formatCurrency((getOnHand(detail)) * (detail.cost_per_unit ?? 0)), null],
           ].map(([l, v, c]: any) => (
             <div key={l} style={{ background: 'var(--surface2)', padding: 12, borderRadius: 8, border: '1px solid var(--border)' }}>
               <div style={{ fontSize: 10, color: 'var(--text3)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '.06em' }}>{l}</div>
@@ -1517,10 +2104,11 @@ function ProductEditModal({ detail, cfg, onRefresh, showToast, onClose }: any) {
     <div className="overlay" onClick={e => e.currentTarget === e.target && onClose()}>
       <div className="modal">
         <div className="handle" />
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-          <div className="mtitle">Edit Product</div>
-          <button className="btn btn-p" style={{ padding: '9px 16px', fontSize: 13 }} onClick={save} disabled={saving}>
-            {saving ? <><div className="spin" />Saving</> : '✓ Save'}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, gap: 8 }}>
+          <div className="mtitle" style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Edit Product</div>
+          <button className="btn btn-d" style={{ padding: '9px 12px', fontSize: 12 }} onClick={remove} disabled={saving} title="Delete">Delete</button>
+          <button className="btn btn-p" style={{ padding: '9px 14px', fontSize: 13 }} onClick={save} disabled={saving}>
+            {saving ? <><div className="spin" />Save</> : '✓ Save'}
           </button>
         </div>
         <div className="ig">
@@ -1582,7 +2170,7 @@ function ProductEditModal({ detail, cfg, onRefresh, showToast, onClose }: any) {
         </div>
         <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid var(--border)' }}>
           <button className="btn btn-d btn-full" disabled={saving} onClick={remove}>
-            🗑 Delete Product
+            Delete Product
           </button>
         </div>
       </div>
@@ -1651,10 +2239,13 @@ function ReceiveTab({ products, cfg, onRefresh, showToast }: any) {
       showToast(`+${amount} received. Total: ${newQty}`, 'success');
       setSelected(null); setQty(''); setNewCost(''); setSearch('');
     } catch (err: any) {
+      console.error('[receive]', err);
       showToast('Error: ' + (err?.message || 'Unknown error'), 'error');
     }
     setSaving(false);
+    // Double refresh — once immediately, once after a brief pause to defeat any replication lag
     try { await onRefresh(); } catch {}
+    setTimeout(() => { try { onRefresh(); } catch {} }, 800);
   }
 
   return (
@@ -1671,26 +2262,30 @@ function ReceiveTab({ products, cfg, onRefresh, showToast }: any) {
             <BarcodeScannerSheet
               onCode={(code) => {
                 setShowRxScanner(false);
-                const match = products.find((p: any) => p.upc === code.trim() || p.ndc === code.trim());
+                const clean = cleanBarcode(code);
+                const match = products.find((p: any) => cleanBarcode(p.upc || '') === clean || cleanBarcode(p.ndc || '') === clean);
                 if (match) setSelected(match);
-                else showToast('Product not found for barcode: ' + code, 'error');
+                else showToast('Product not found for barcode: ' + clean, 'error');
               }}
               onClose={() => setShowRxScanner(false)}
             />
           )}
-          {filtered.map((p: any) => {
-            const qty = p.inventory?.[0]?.on_hand ?? 0;
-            return (
-              <div key={p.id} className="prow" onClick={() => setSelected(p)}>
-                <div className="pico">📦</div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div className="pname">{p.name}</div>
-                  <div className="psub">{p.vendor || '—'}</div>
+          <div className="card-row">
+            {filtered.map((p: any) => {
+              const qty = getOnHand(p);
+              const st = stockStatus(p);
+              return (
+                <div key={p.id} className="row" onClick={() => setSelected(p)}>
+                  <div className={`row-ico ${st === 'd' ? 'd' : st === 'w' ? 'w' : 'g'}`}>📦</div>
+                  <div className="row-main">
+                    <div className="row-title">{p.name}</div>
+                    <div className="row-sub">{p.vendor || '—'}</div>
+                  </div>
+                  <div className={`row-qty ${st}`}>{qty}</div>
                 </div>
-                <div className={`pqty ${stockStatus(p)}`}>{qty}</div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
           {filtered.length === 0 && <div className="empty"><div className="empty-ico">📦</div><div className="empty-t">No products match</div></div>}
         </>
       ) : (
@@ -1701,7 +2296,7 @@ function ReceiveTab({ products, cfg, onRefresh, showToast }: any) {
             <div style={{ display: 'flex', gap: 20, marginTop: 14 }}>
               <div>
                 <div style={{ fontSize: 10, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '.06em' }}>Current</div>
-                <div style={{ fontFamily: 'var(--mono)', fontSize: 24, fontWeight: 600 }}>{selected.inventory?.[0]?.on_hand ?? 0}</div>
+                <div style={{ fontFamily: 'var(--mono)', fontSize: 24, fontWeight: 600 }}>{getOnHand(selected)}</div>
               </div>
               <div>
                 <div style={{ fontSize: 10, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '.06em' }}>Current Cost</div>
@@ -1773,6 +2368,7 @@ function DispenseTab({ products, cfg, onRefresh, showToast }: any) {
   const [qty, setQty] = useState('');
   const [reason, setReason] = useState('compounding');
   const [saving, setSaving] = useState(false);
+  const [alarmData, setAlarmData] = useState<any>(null);
 
   const reasons = [
     { id: 'compounding', label: '🧪 Compounding', txType: 'adjustment' },
@@ -1791,7 +2387,7 @@ function DispenseTab({ products, cfg, onRefresh, showToast }: any) {
     if (!selected || !qty) return;
     const amount = parseInt(qty);
     if (isNaN(amount) || amount <= 0) { showToast('Enter a valid quantity', 'error'); return; }
-    const currentQty = selected.inventory?.[0]?.on_hand ?? 0;
+    const currentQty = getOnHand(selected);
     if (amount > currentQty) { showToast(`Only ${currentQty} in stock`, 'error'); return; }
     setSaving(true);
     try {
@@ -1808,6 +2404,9 @@ function DispenseTab({ products, cfg, onRefresh, showToast }: any) {
         return;
       }
       const newQty = actualCurrent - amount;
+      const threshold = selected.reorder_threshold ?? 10;
+      const willTriggerAlarm = actualCurrent > threshold && newQty <= threshold;
+
       await upsertInventory(cfg, selected.id, {
         on_hand: newQty, last_updated: new Date().toISOString(),
       });
@@ -1820,13 +2419,21 @@ function DispenseTab({ products, cfg, onRefresh, showToast }: any) {
         notes: r.label,
         performed_by: 'Staff',
       });
-      showToast(`−${amount} dispensed. Remaining: ${newQty}`, 'success');
-      setSelected(null); setQty(''); setReason('compounding'); setSearch('');
+
+      if (willTriggerAlarm) {
+        // ALARM! Product crossed below reorder threshold
+        setAlarmData({ name: selected.name, qty: newQty, threshold });
+        // Reset happens when user dismisses alarm
+      } else {
+        showToast(`−${amount} used. ${newQty} left`, 'success');
+        setSelected(null); setQty(''); setReason('compounding'); setSearch('');
+      }
     } catch (err: any) {
       showToast('Error: ' + (err?.message || 'Unknown error'), 'error');
     }
     setSaving(false);
     try { await onRefresh(); } catch {}
+    setTimeout(() => { try { onRefresh(); } catch {} }, 800);
   }
 
   return (
@@ -1836,20 +2443,23 @@ function DispenseTab({ products, cfg, onRefresh, showToast }: any) {
       {!selected ? (
         <>
           <input className="inp" style={{ marginBottom: 14 }} placeholder="Search product..." value={search} onChange={e => setSearch(e.target.value)} autoFocus />
-          {filtered.map((p: any) => {
-            const qty = p.inventory?.[0]?.on_hand ?? 0;
-            return (
-              <div key={p.id} className="prow" onClick={() => qty > 0 ? setSelected(p) : showToast('Out of stock', 'error')}
-                style={{ opacity: qty > 0 ? 1 : 0.5 }}>
-                <div className="pico">💊</div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div className="pname">{p.name}</div>
-                  <div className="psub">{p.vendor || '—'}</div>
+          <div className="card-row">
+            {filtered.map((p: any) => {
+              const qty = getOnHand(p);
+              const st = stockStatus(p);
+              return (
+                <div key={p.id} className="row" onClick={() => qty > 0 ? setSelected(p) : showToast('Out of stock', 'error')}
+                  style={{ opacity: qty > 0 ? 1 : 0.5 }}>
+                  <div className={`row-ico ${st === 'd' ? 'd' : st === 'w' ? 'w' : 'a'}`}>💊</div>
+                  <div className="row-main">
+                    <div className="row-title">{p.name}</div>
+                    <div className="row-sub">{p.vendor || '—'}</div>
+                  </div>
+                  <div className={`row-qty ${st}`}>{qty}</div>
                 </div>
-                <div className={`pqty ${stockStatus(p)}`}>{qty}</div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
           {filtered.length === 0 && <div className="empty"><div className="empty-ico">🔍</div><div className="empty-t">No products match</div></div>}
         </>
       ) : (
@@ -1859,24 +2469,19 @@ function DispenseTab({ products, cfg, onRefresh, showToast }: any) {
             <div className="res-sub">{selected.vendor || '—'}</div>
             <div style={{ marginTop: 14 }}>
               <div style={{ fontSize: 10, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '.06em' }}>Available</div>
-              <div style={{ fontFamily: 'var(--mono)', fontSize: 24, fontWeight: 600, color: 'var(--accent)' }}>{selected.inventory?.[0]?.on_hand ?? 0}</div>
+              <div style={{ fontFamily: 'var(--mono)', fontSize: 24, fontWeight: 600, color: 'var(--accent)' }}>{getOnHand(selected)}</div>
             </div>
           </div>
 
           <div className="ig">
             <label className="lbl">Reason</label>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
               {reasons.map(r => (
                 <button
                   key={r.id}
                   onClick={() => setReason(r.id)}
-                  className="btn btn-s"
-                  style={{
-                    fontSize: 12, padding: '10px 8px',
-                    background: reason === r.id ? 'var(--accent-bg)' : undefined,
-                    borderColor: reason === r.id ? 'var(--accent)' : undefined,
-                    color: reason === r.id ? 'var(--accent)' : undefined,
-                  }}>
+                  className={`chip ${reason === r.id ? 'on' : ''}`}
+                  style={{ justifyContent: 'center', padding: '12px 8px', fontSize: 13 }}>
                   {r.label}
                 </button>
               ))}
@@ -1891,7 +2496,7 @@ function DispenseTab({ products, cfg, onRefresh, showToast }: any) {
               inputMode="numeric"
               pattern="[0-9]*"
               min="1"
-              max={selected.inventory?.[0]?.on_hand ?? 0}
+              max={getOnHand(selected)}
               placeholder="How many?"
               value={qty}
               onChange={e => setQty(e.target.value)}
@@ -1909,6 +2514,17 @@ function DispenseTab({ products, cfg, onRefresh, showToast }: any) {
         </>
       )}
       <div className="tab-spacer" />
+      {alarmData && (
+        <SkullAlarm
+          productName={alarmData.name}
+          newQty={alarmData.qty}
+          threshold={alarmData.threshold}
+          onClose={() => {
+            setAlarmData(null);
+            setSelected(null); setQty(''); setReason('compounding'); setSearch('');
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -2533,16 +3149,18 @@ function ReportsTab({ products, cfg, showToast }: any) {
           {!selectedProduct ? (
             <>
               <input className="inp" placeholder="Search product..." value={productSearch} onChange={e => setProductSearch(e.target.value)} style={{ marginBottom: 12 }} />
-              {productsFiltered.map((p: any) => (
-                <div key={p.id} className="prow" onClick={() => { setSelectedProduct(p); loadProductHistory(p.id); }}>
-                  <div className="pico">📊</div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div className="pname">{p.name}</div>
-                    <div className="psub">{p.vendor || '—'}</div>
+              <div className="card-row">
+                {productsFiltered.map((p: any) => (
+                  <div key={p.id} className="row" onClick={() => { setSelectedProduct(p); loadProductHistory(p.id); }}>
+                    <div className="row-ico p">📊</div>
+                    <div className="row-main">
+                      <div className="row-title">{p.name}</div>
+                      <div className="row-sub">{p.vendor || '—'}</div>
+                    </div>
+                    <div className="row-qty">{getOnHand(p)}</div>
                   </div>
-                  <div className="pqty a">{p.inventory?.[0]?.on_hand ?? 0}</div>
-                </div>
-              ))}
+                ))}
+              </div>
             </>
           ) : (
             <>
@@ -2633,6 +3251,15 @@ function SettingsTab({ cfg, showToast, setCfg }: any) {
   const [settingsPin, setSettingsPin] = useState('');
   const [settingsPinConfirm, setSettingsPinConfirm] = useState('');
   const [testing, setTesting] = useState(false);
+  const [proxyStatus, setProxyStatus] = useState<'checking' | 'ok' | 'missing'>('checking');
+
+  // Check if the Netlify proxy is deployed
+  useEffect(() => {
+    if (!settingsUnlocked) return;
+    fetch('/.netlify/functions/claude', { method: 'OPTIONS' })
+      .then(res => setProxyStatus(res.status < 500 ? 'ok' : 'missing'))
+      .catch(() => setProxyStatus('missing'));
+  }, [settingsUnlocked]);
 
   const hasKey = !!apiKey && apiKey.startsWith('sk-');
   const expectedSettingsPin = localStorage.getItem('skynet_settings_pin') || SETTINGS_PIN_DEFAULT;
@@ -2687,36 +3314,60 @@ function SettingsTab({ cfg, showToast, setCfg }: any) {
   return (
     <div className="tab-in" style={{ padding: 16 }}>
 
-      {/* API KEY */}
-      <div className="sec-label">AI Features</div>
+      {/* AI SECTION */}
+      <div className="sec-label-uc">AI features</div>
       <div className="card" style={{ marginBottom: 16 }}>
-        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 4 }}>Anthropic API Key</div>
-        <div style={{ fontSize: 12, color: 'var(--text2)', marginBottom: 12, lineHeight: 1.5 }}>
-          Powers invoice scanning and barcode photo reading. Get a key at console.anthropic.com
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
-          <div style={{ width: 8, height: 8, borderRadius: '50%', background: hasKey ? 'var(--ok)' : 'var(--danger)' }} />
-          <span style={{ fontSize: 11, color: hasKey ? 'var(--ok)' : 'var(--danger)', fontWeight: 600 }}>
-            {hasKey ? 'API key configured' : 'No API key — AI features disabled'}
-          </span>
-        </div>
-        <div className="ig" style={{ marginTop: 12 }}>
-          <label className="lbl">API Key</label>
-          <input
-            className="inp"
-            type="password"
-            placeholder="sk-ant-api03-..."
-            value={apiKey}
-            onChange={e => setApiKey(e.target.value)}
-            style={{ fontFamily: 'var(--mono)', fontSize: 13 }}
-          />
-        </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button className="btn btn-p" style={{ flex: 1 }} onClick={saveApiKey}>Save Key</button>
-          <button className="btn btn-s" onClick={testApiKey} disabled={testing || !apiKey}>
-            {testing ? <><div className="spin" />Testing</> : 'Test'}
-          </button>
-        </div>
+        {proxyStatus === 'ok' && (
+          <>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+              <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--green)' }} />
+              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)' }}>AI is active via server proxy</div>
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--text2)', lineHeight: 1.5, marginBottom: 8 }}>
+              Invoice scanning, photo barcode reading, and all AI features are working for everyone on this site — no per-device API key needed. The key is stored securely on the server.
+            </div>
+            <button className="btn btn-s" style={{ fontSize: 12, width: '100%' }} onClick={testApiKey} disabled={testing}>
+              {testing ? <><div className="spin" />Testing</> : 'Test AI connection'}
+            </button>
+          </>
+        )}
+        {proxyStatus === 'checking' && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div className="spin" />
+            <span style={{ fontSize: 13, color: 'var(--text2)' }}>Checking AI connection...</span>
+          </div>
+        )}
+        {proxyStatus === 'missing' && (
+          <>
+            <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', marginBottom: 4 }}>Personal API key (fallback)</div>
+            <div style={{ fontSize: 12, color: 'var(--text2)', lineHeight: 1.5, marginBottom: 12 }}>
+              Server proxy not detected. Add your Anthropic API key to enable AI features on this device. Get one at console.anthropic.com.
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+              <div style={{ width: 8, height: 8, borderRadius: '50%', background: hasKey ? 'var(--green)' : 'var(--red)' }} />
+              <span style={{ fontSize: 11, color: hasKey ? 'var(--green)' : 'var(--red)', fontWeight: 600 }}>
+                {hasKey ? 'API key configured' : 'No API key — AI features disabled'}
+              </span>
+            </div>
+            <div className="ig" style={{ marginTop: 12 }}>
+              <label className="lbl">API Key</label>
+              <input
+                className="inp"
+                type="password"
+                placeholder="sk-ant-api03-..."
+                value={apiKey}
+                onChange={e => setApiKey(e.target.value)}
+                style={{ fontFamily: 'var(--mono)', fontSize: 13 }}
+              />
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button className="btn btn-p" style={{ flex: 1 }} onClick={saveApiKey}>Save Key</button>
+              <button className="btn btn-s" onClick={testApiKey} disabled={testing || !apiKey}>
+                {testing ? <><div className="spin" />Testing</> : 'Test'}
+              </button>
+            </div>
+          </>
+        )}
       </div>
 
       {/* APP PIN */}
@@ -2831,6 +3482,7 @@ export default function SkyNet() {
   const [loading, setLoading] = useState(false);
   const [syncError, setSyncError] = useState('');
   const [toast, setToast] = useState<{ msg: string; type: string } | null>(null);
+  const [showDebug, setShowDebug] = useState(false);
 
   // Load cfg from localStorage on mount — sets cfgLoaded once done
   useEffect(() => {
@@ -2879,7 +3531,8 @@ export default function SkyNet() {
     setSyncError('');
     try {
       const data = await loadAll(cfg);
-      setProducts(data);
+      // Force new reference so React always re-renders all consumers
+      setProducts([...data]);
     } catch (e: any) {
       const msg = e?.message || 'Unknown error';
       setSyncError(msg);
@@ -2937,17 +3590,23 @@ export default function SkyNet() {
       <div className="app">
         <div className="hdr">
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ fontSize: 22 }}>💊</div>
+            <div style={{
+              width: 32, height: 32, borderRadius: 9, background: 'var(--accent)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: '#FFF', fontSize: 16, fontWeight: 700, fontFamily: 'var(--mono)',
+              letterSpacing: '-0.04em'
+            }}>S</div>
             <div>
               <div className="hdr-logo">SKYNET</div>
               <div className="hdr-sub">
-                MAPLETON v2.6 · {loading ? 'Syncing...' : products.length > 0 ? `${products.length} products` : syncError ? 'Sync error' : 'Connected'}
+                MAPLETON v4.1 · {loading ? 'Syncing...' : products.length > 0 ? `${products.length} products` : syncError ? 'Sync error' : 'Connected'}
               </div>
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
             {loading && <div className="spin" />}
             {!loading && <button className="hdr-btn" onClick={refresh} title="Refresh">↻</button>}
+            <button className="hdr-btn" onClick={() => setShowDebug(true)} title="Debug" style={{ fontSize: 14 }}>🔍</button>
             <button className="hdr-btn" onClick={handleLock} title="Lock app" style={{ fontSize: 15 }}>🔒</button>
           </div>
         </div>
@@ -2985,6 +3644,37 @@ export default function SkyNet() {
         </div>
       </div>
 
+      {showDebug && (
+        <div className="overlay" onClick={e => e.currentTarget === e.target && setShowDebug(false)}>
+          <div className="modal">
+            <div className="handle" />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <div className="mtitle">Debug Info</div>
+              <button className="btn btn-s" style={{ padding: '6px 12px', fontSize: 12 }} onClick={() => setShowDebug(false)}>Close</button>
+            </div>
+            <div style={{ background: 'var(--surface2)', padding: 12, borderRadius: 8, fontFamily: 'var(--mono)', fontSize: 11, marginBottom: 12 }}>
+              <div><strong>Products loaded:</strong> {products.length}</div>
+              <div><strong>Loading:</strong> {loading ? 'YES' : 'NO'}</div>
+              <div><strong>Sync error:</strong> {syncError || 'none'}</div>
+              <div><strong>cfg URL:</strong> {cfg?.url?.slice(0, 40) || 'none'}...</div>
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--text2)', marginBottom: 8, fontWeight: 600 }}>First 5 products (raw):</div>
+            <div style={{ background: 'var(--surface2)', padding: 12, borderRadius: 8, fontFamily: 'var(--mono)', fontSize: 10, maxHeight: 300, overflow: 'auto', whiteSpace: 'pre-wrap' }}>
+              {JSON.stringify(products.slice(0, 5).map(p => ({
+                name: p.name,
+                cost: p.cost_per_unit,
+                inventory_type: Array.isArray(p.inventory) ? 'array' : typeof p.inventory,
+                inventory_raw: p.inventory,
+                computed_on_hand: getOnHand(p),
+              })), null, 2)}
+            </div>
+            <button className="btn btn-p btn-full" style={{ marginTop: 12 }} onClick={async () => {
+              await refresh();
+              setShowDebug(false);
+            }}>Force Refresh & Close</button>
+          </div>
+        </div>
+      )}
       {toast && <div className={`toast ${toast.type}`}>{toast.msg}</div>}
     </>
   );
