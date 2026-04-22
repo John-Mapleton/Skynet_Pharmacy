@@ -2074,6 +2074,7 @@ function ProductEditModal({ detail, cfg, onRefresh, showToast, onClose }: any) {
     ndc: detail.ndc || '',
   });
   const [saving, setSaving] = useState(false);
+  const [showScanner, setShowScanner] = useState(false);
 
   async function save() {
     setSaving(true);
@@ -2166,15 +2167,40 @@ function ProductEditModal({ detail, cfg, onRefresh, showToast, onClose }: any) {
             <input className="inp" value={form.unit} onChange={e => setForm(x => ({ ...x, unit: e.target.value }))} />
           </div>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-          <div className="ig">
-            <label className="lbl">UPC</label>
-            <input className="inp" style={{ fontFamily: 'var(--mono)', fontSize: 13 }} value={form.upc} onChange={e => setForm(x => ({ ...x, upc: e.target.value }))} />
+        <div className="ig">
+          <label className="lbl">UPC</label>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <input 
+              className="inp" 
+              style={{ flex: 1, fontFamily: 'var(--mono)', fontSize: 13 }} 
+              placeholder="No barcode scanned"
+              value={form.upc} 
+              onChange={e => setForm(x => ({ ...x, upc: e.target.value }))} 
+            />
+            <button
+              type="button"
+              className="btn btn-s"
+              style={{ padding: '0 14px', flexShrink: 0 }}
+              onClick={() => setShowScanner(true)}
+            >
+              Scan
+            </button>
+            {form.upc && (
+              <button
+                type="button"
+                className="btn btn-d"
+                style={{ padding: '0 12px', flexShrink: 0, fontSize: 12 }}
+                onClick={() => setForm(x => ({ ...x, upc: '' }))}
+                title="Clear UPC"
+              >
+                Clear
+              </button>
+            )}
           </div>
-          <div className="ig">
-            <label className="lbl">NDC</label>
-            <input className="inp" style={{ fontFamily: 'var(--mono)', fontSize: 13 }} value={form.ndc} onChange={e => setForm(x => ({ ...x, ndc: e.target.value }))} />
-          </div>
+        </div>
+        <div className="ig">
+          <label className="lbl">NDC</label>
+          <input className="inp" style={{ fontFamily: 'var(--mono)', fontSize: 13 }} value={form.ndc} onChange={e => setForm(x => ({ ...x, ndc: e.target.value }))} />
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <button className="btn btn-p" style={{ flex: 1 }} onClick={save} disabled={saving}>
@@ -2188,6 +2214,21 @@ function ProductEditModal({ detail, cfg, onRefresh, showToast, onClose }: any) {
           </button>
         </div>
       </div>
+      {showScanner && (
+        <BarcodeScannerSheet
+          onClose={() => setShowScanner(false)}
+          onCode={(code: string) => {
+            setShowScanner(false);
+            const clean = cleanBarcode(code);
+            if (clean) {
+              setForm(x => ({ ...x, upc: clean }));
+              showToast(`UPC scanned: ${clean}`, 'success');
+            } else {
+              showToast('Could not read barcode clearly', 'error');
+            }
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -3613,7 +3654,7 @@ export default function SkyNet() {
             <div>
               <div className="hdr-logo">SKYNET</div>
               <div className="hdr-sub">
-                MAPLETON v4.3 · {loading ? 'Syncing...' : products.length > 0 ? `${products.length} products` : syncError ? 'Sync error' : 'Connected'}
+                MAPLETON v4.4 · {loading ? 'Syncing...' : products.length > 0 ? `${products.length} products` : syncError ? 'Sync error' : 'Connected'}
               </div>
             </div>
           </div>
