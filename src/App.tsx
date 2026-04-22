@@ -1419,7 +1419,7 @@ function Dashboard({ products, setTab, showToast }: any) {
       <div className="greeting" onClick={handleLogoTap}>
         <div className="greet-day">{todayStr}</div>
         <div className="greet-title">
-          {greeting}<span className="greet-name">{greeting.includes(",") || greeting.includes("?") || greeting.includes(".") || greeting.includes("!") ? "" : ", John."}</span>
+          {greeting}
         </div>
       </div>
 
@@ -3613,7 +3613,7 @@ export default function SkyNet() {
             <div>
               <div className="hdr-logo">SKYNET</div>
               <div className="hdr-sub">
-                MAPLETON v4.2 · {loading ? 'Syncing...' : products.length > 0 ? `${products.length} products` : syncError ? 'Sync error' : 'Connected'}
+                MAPLETON v4.3 · {loading ? 'Syncing...' : products.length > 0 ? `${products.length} products` : syncError ? 'Sync error' : 'Connected'}
               </div>
             </div>
           </div>
