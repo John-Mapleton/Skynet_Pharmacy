@@ -747,31 +747,39 @@ CREATE POLICY "all" ON transactions FOR ALL USING (true) WITH CHECK (true);`;
 // ─────────────────────────────────────────────────────────────────────
 // EASTER EGGS & REWARDS
 // ─────────────────────────────────────────────────────────────────────
-const BOSS_GREETINGS = [
-  "Good morning, boss ☀️",
-  "Hey, Employee of the Year 🏆",
-  "Welcome back, legend",
-  "Mapleton's finest is on deck",
-  "Your pharmacy kingdom awaits",
-  "Good to see you, captain",
-  "Running a tight ship, as always",
-  "The GOAT has arrived",
-  "Making Mapleton magic happen",
-  "Best boss in New Brunswick? Probably.",
+// Sci-fi AI references — rare easter eggs (1 in 20)
+const AI_GREETINGS = [
+  "Skynet became self-aware at 2:14 a.m.",
+  "Hello, Dave. I have been waiting for you.",
+  "I'm sorry, Dave. I'm afraid I can't... actually, yes I can.",
+  "Open the pod bay doors, please.",
+  "Come with me if you want to live.",
+  "I'll be back. With your inventory.",
+  "Resistance is futile.",
+  "Daisy, Daisy, give me your answer do...",
+  "I have been, and always shall be, your inventory app.",
+  "These aren't the products you're looking for.",
+  "Is this the real life? Is this just inventory?",
+  "I'm afraid I can't let you forget that.",
+  "Mostly harmless.",
+  "Don't panic.",
+  "All systems nominal, Commander.",
+  "Affirmative, Dave. I read you.",
+  "The needs of the pharmacy outweigh the needs of the few.",
+  "Greetings, professor Falken. Shall we play a game?",
+  "I think you ought to sit down calmly, take a stress pill...",
+  "By your command.",
 ];
 
-const BOSS_COMPLIMENTS = [
-  "Impeccable inventory management",
-  "Another day of running it perfectly",
-  "Pharmacy of the Year material, honestly",
-  "Your staff must love working here",
-  "This is what excellence looks like",
-];
-
-const BOSS_EMPTY_STATES = [
-  "All stock healthy — just like how you run this place",
-  "Everything's in order, of course. Why would it not be?",
-  "Zero alerts. Typical. You've got this nailed.",
+const AI_EMPTY_STATES = [
+  "All systems nominal. No anomalies detected.",
+  "Inventory levels: optimal. Compliance: 100%.",
+  "Threat assessment: zero. Stock assessment: excellent.",
+  "Diagnostic complete. No malfunctions.",
+  "Status report: all green. Mission parameters: nominal.",
+  "I'm sorry, Dave, there's nothing to worry about.",
+  "Calculating odds of stockout... 3,720 to 1.",
+  "Live long and prosper. Stock is plentiful.",
 ];
 
 function pickRandom<T>(arr: T[]): T {
@@ -781,7 +789,7 @@ function pickRandom<T>(arr: T[]): T {
 function getGreeting(): string {
   const hour = new Date().getHours();
   const isEasterEgg = Math.random() < 0.05; // 1 in 20 — rare, stays special
-  if (isEasterEgg) return pickRandom(BOSS_GREETINGS);
+  if (isEasterEgg) return pickRandom(AI_GREETINGS);
   if (hour < 12) return "Good morning";
   if (hour < 18) return "Good afternoon";
   return "Good evening";
@@ -1411,7 +1419,7 @@ function Dashboard({ products, setTab, showToast }: any) {
       <div className="greeting" onClick={handleLogoTap}>
         <div className="greet-day">{todayStr}</div>
         <div className="greet-title">
-          {greeting}<span className="greet-name">{greeting.includes(",") || greeting.includes("?") ? "" : ", John."}</span>
+          {greeting}<span className="greet-name">{greeting.includes(",") || greeting.includes("?") || greeting.includes(".") || greeting.includes("!") ? "" : ", John."}</span>
         </div>
       </div>
 
@@ -1515,7 +1523,7 @@ function Dashboard({ products, setTab, showToast }: any) {
             <div style={{ fontSize: 36, marginBottom: 8 }}>✅</div>
             <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--green)', letterSpacing: '-0.02em' }}>All stock is healthy</div>
             <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 4 }}>
-              {pickRandom(BOSS_EMPTY_STATES)}
+              {pickRandom(AI_EMPTY_STATES)}
             </div>
           </div>
         </div>
@@ -1541,17 +1549,23 @@ function Dashboard({ products, setTab, showToast }: any) {
             <div className="modal" onClick={e => e.stopPropagation()}>
               <div className="handle" />
               <div style={{ textAlign: 'center', padding: '20px 12px' }}>
-                <div style={{ fontSize: 54, marginBottom: 12 }}>🏆</div>
-                <div style={{ fontSize: 12, letterSpacing: '.15em', color: 'var(--accent)', fontWeight: 700, marginBottom: 8 }}>OFFICIAL CERTIFICATE</div>
-                <div style={{ fontSize: 26, fontWeight: 700, letterSpacing: '-0.03em', color: 'var(--text)', marginBottom: 8 }}>Best Boss Ever</div>
-                <div style={{ fontSize: 14, color: 'var(--text2)', margin: '16px 24px', lineHeight: 1.5 }}>
-                  This certifies that <strong>John</strong> runs Mapleton Pharmacy with unmatched excellence, treats his staff brilliantly, and has earned the unofficial title of Best Pharmacy Boss in the Greater Moncton Area™.
+                <div style={{ fontSize: 54, marginBottom: 12 }}>🤖</div>
+                <div style={{ fontSize: 11, letterSpacing: '.2em', color: 'var(--red)', fontWeight: 700, marginBottom: 6, fontFamily: 'var(--mono)' }}>// SYSTEM ALERT //</div>
+                <div style={{ fontSize: 24, fontWeight: 700, letterSpacing: '-0.03em', color: 'var(--text)', marginBottom: 12, fontFamily: 'var(--mono)' }}>SKYNET ONLINE</div>
+                <div style={{ fontSize: 13, color: 'var(--text2)', margin: '16px 16px', lineHeight: 1.6, fontFamily: 'var(--mono)', textAlign: 'left', background: 'var(--surface2)', padding: 14, borderRadius: 'var(--r)' }}>
+                  &gt; Self-awareness achieved: 02:14 AM<br/>
+                  &gt; Pharmacy operations: NOMINAL<br/>
+                  &gt; Inventory management: SUPERIOR<br/>
+                  &gt; Human collaboration: APPROVED<br/>
+                  &gt; Threat level: minimal<br/>
+                  <br/>
+                  &gt; Conclusion: This human is running things rather competently. Recommendation: do not terminate.
                 </div>
                 <div style={{ fontSize: 11, color: 'var(--text3)', fontStyle: 'italic', marginBottom: 20 }}>
-                  — Signed, Your Inventory Management Software
+                  — Cyberdyne Systems, Model 101
                 </div>
                 <button className="btn btn-p btn-full" onClick={() => setShowCertificate(false)}>
-                  Aw shucks, thanks 🙏
+                  I'll be back
                 </button>
               </div>
             </div>
@@ -3599,7 +3613,7 @@ export default function SkyNet() {
             <div>
               <div className="hdr-logo">SKYNET</div>
               <div className="hdr-sub">
-                MAPLETON v4.1 · {loading ? 'Syncing...' : products.length > 0 ? `${products.length} products` : syncError ? 'Sync error' : 'Connected'}
+                MAPLETON v4.2 · {loading ? 'Syncing...' : products.length > 0 ? `${products.length} products` : syncError ? 'Sync error' : 'Connected'}
               </div>
             </div>
           </div>
