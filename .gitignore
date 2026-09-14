@@ -22,3 +22,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# SKYNET local dev
+scripts/.handler.bundle.mjs
+skynet-dev.json
+.netlify
+scripts/.ai.bundle.mjs
