@@ -1,6 +1,8 @@
 import type { Product, StockStatus } from '../types';
+import { cleanBarcode, normCode, findByCode, skuLabel, nameKey, findMatches, nameSimilarity, scanCandidates, isSku } from '../../netlify/lib/match';
 
-export const cleanBarcode = (raw: unknown) => String(raw ?? '').replace(/[^0-9]/g, '');
+// Matching / identity helpers are shared with the server so both sides agree.
+export { cleanBarcode, normCode, findByCode, skuLabel, nameKey, findMatches, nameSimilarity, scanCandidates, isSku };
 
 export function stockStatus(p: Product): StockStatus {
   if (p.on_hand <= 0) return 'd';
@@ -28,24 +30,37 @@ export function formatDate(iso: string | null | undefined): string {
     ' ' + d.toLocaleTimeString('en-CA', { hour: '2-digit', minute: '2-digit' });
 }
 
-/** Search products by name / barcode / vendor / category. */
+/** The one-line identifier shown under a product name. */
+export function productCodeLine(p: Product): string {
+  const parts: string[] = [];
+  if (p.upc) parts.push(p.upc);
+  if (p.ndc) parts.push(`DIN ${p.ndc}`);
+  if (!parts.length) parts.push(`SKYNET ${skuLabel(p.sku) || '—'} · no barcode`);
+  return parts.join(' · ');
+}
+
+/** Search products by name / any code / vendor / category. "#42" or "42" finds SKYNET code #0042. */
 export function searchProducts(products: Product[], q: string, limit = Infinity): Product[] {
   const s = q.trim().toLowerCase();
+  if (!s) return products.slice(0, limit);
+  const code = normCode(s);
   const digits = cleanBarcode(s);
-  const out = !s ? products : products.filter(p =>
+  const byCode = findByCode(products, s);
+  const key = nameKey(s);
+  const out = products.filter(p =>
+    p === byCode ||
     p.name.toLowerCase().includes(s) ||
+    (key && nameKey(p.name).includes(key)) ||
     (p.vendor || '').toLowerCase().includes(s) ||
     (p.category || '').toLowerCase().includes(s) ||
     (p.ndc || '').toLowerCase().includes(s) ||
-    (digits.length >= 3 && (cleanBarcode(p.upc).includes(digits) || cleanBarcode(p.ndc).includes(digits))));
+    (code.length >= 3 && (normCode(p.upc).includes(code) || normCode(p.ndc).includes(code) || p.codes.some(c => c.includes(code)))) ||
+    (digits.length >= 2 && s.startsWith('#') && skuLabel(p.sku).includes(digits)));
   return out.slice(0, limit);
 }
 
-export function findByBarcode(products: Product[], code: string): Product | undefined {
-  const c = cleanBarcode(code);
-  if (!c) return undefined;
-  return products.find(p => cleanBarcode(p.upc) === c || cleanBarcode(p.ndc) === c);
-}
+/** @deprecated use findByCode — kept so older call sites keep working */
+export const findByBarcode = findByCode;
 
 /** Convert any image file (incl. iPhone HEIC) to a downscaled JPEG base64 string. */
 export function imageToJpegBase64(file: File, max = 1600, quality = 0.85): Promise<string> {
@@ -91,9 +106,9 @@ export function csvEscape(v: unknown): string {
 }
 
 export function productsToCsv(products: Product[]): string {
-  const cols: (keyof Product)[] = ['name', 'upc', 'ndc', 'vendor', 'category', 'unit', 'cost_per_unit', 'on_hand', 'reorder_threshold', 'last_counted', 'last_updated'];
-  const head = ['Product Name', 'UPC', 'NDC', 'Vendor', 'Category', 'Unit', 'Unit Cost', 'On Hand', 'Reorder At', 'Last Counted', 'Last Updated'];
-  return [head.join(','), ...products.map(p => cols.map(c => csvEscape(p[c])).join(','))].join('\n');
+  const cols: (keyof Product)[] = ['name', 'sku', 'upc', 'ndc', 'codes', 'vendor', 'category', 'unit', 'cost_per_unit', 'on_hand', 'reorder_threshold', 'last_counted', 'last_updated'];
+  const head = ['Product Name', 'SKYNET Code', 'UPC', 'NDC/DIN', 'Other Codes', 'Vendor', 'Category', 'Unit', 'Unit Cost', 'On Hand', 'Reorder At', 'Last Counted', 'Last Updated'];
+  return [head.join(','), ...products.map(p => cols.map(c => csvEscape(Array.isArray(p[c]) ? (p[c] as string[]).join(' ') : p[c])).join(','))].join('\n');
 }
 
 export async function copyText(text: string): Promise<boolean> {

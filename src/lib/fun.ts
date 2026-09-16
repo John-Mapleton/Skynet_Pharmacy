@@ -43,11 +43,29 @@ export function getGreeting(name?: string): string {
   return name ? `${base}, ${name}` : base;
 }
 
+// iOS Safari only lets a page make sound from inside a user tap. The alarm is
+// shown AFTER the save round-trip (no longer inside the tap), so we create one
+// shared AudioContext and "prime" it during the tap that starts the save.
+let audioCtx: AudioContext | null = null;
+export function primeAudio() {
+  try {
+    const AC = (window as any).AudioContext || (window as any).webkitAudioContext;
+    if (!AC) return;
+    if (!audioCtx) audioCtx = new AC();
+    if (audioCtx!.state === 'suspended') audioCtx!.resume().catch(() => {});
+    // a silent tick keeps the context "unlocked" on iOS
+    const osc = audioCtx!.createOscillator(); const g = audioCtx!.createGain();
+    g.gain.value = 0.0001; osc.connect(g); g.connect(audioCtx!.destination); osc.start(); osc.stop(audioCtx!.currentTime + 0.01);
+  } catch {}
+}
+
 export function playAlarmSound() {
   try {
     const AC = (window as any).AudioContext || (window as any).webkitAudioContext;
     if (!AC) return;
-    const ctx = new AC();
+    if (!audioCtx) audioCtx = new AC();
+    const ctx = audioCtx!;
+    if (ctx.state === 'suspended') ctx.resume().catch(() => {});
     const now = ctx.currentTime;
     const beep = (freq: number, start: number, duration: number) => {
       const osc = ctx.createOscillator(); const gain = ctx.createGain();
@@ -67,7 +85,9 @@ export function playSuccessBlip() {
   try {
     const AC = (window as any).AudioContext || (window as any).webkitAudioContext;
     if (!AC) return;
-    const ctx = new AC(); const osc = ctx.createOscillator(); const gain = ctx.createGain();
+    if (!audioCtx) audioCtx = new AC();
+    const ctx = audioCtx!; const osc = ctx.createOscillator(); const gain = ctx.createGain();
+    if (ctx.state === 'suspended') ctx.resume().catch(() => {});
     osc.type = 'sine'; osc.frequency.setValueAtTime(1046, ctx.currentTime);
     gain.gain.setValueAtTime(0.15, ctx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
