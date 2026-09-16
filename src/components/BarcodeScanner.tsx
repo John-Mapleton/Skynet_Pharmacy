@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Sheet } from './ui';
 import { decodeImageFile, hasCamera, hasNativeDetector, startLiveScan, type LiveScan } from '../lib/scanner';
-import { cleanBarcode } from '../lib/util';
+import { normCode } from '../lib/util';
 import { playSuccessBlip } from '../lib/fun';
 
 type Mode = 'options' | 'camera' | 'manual' | 'processing';
@@ -25,8 +25,8 @@ export function ScannerPanel({ onCode, onCancel, allowManual = true, autoStart =
   useEffect(() => () => stop(), []);
 
   const deliver = (code: string) => {
-    const c = cleanBarcode(code);
-    if (!c) { setError('No digits found'); setMode('options'); return; }
+    const c = normCode(code);
+    if (!c) { setError('No code found'); setMode('options'); return; }
     playSuccessBlip();
     onCode(c);
   };
@@ -98,13 +98,13 @@ export function ScannerPanel({ onCode, onCancel, allowManual = true, autoStart =
       {mode === 'manual' && (
         <div>
           <div className="ig">
-            <label className="lbl">UPC / NDC code</label>
-            <input className="inp mono" style={{ fontSize: 18, letterSpacing: '.05em' }} placeholder="Enter barcode digits" inputMode="numeric"
+            <label className="lbl">Barcode, DIN, vendor code or SKYNET # </label>
+            <input className="inp mono" style={{ fontSize: 18, letterSpacing: '.05em' }} placeholder="Enter barcode digits"
               value={manual} onChange={e => setManual(e.target.value)} autoFocus
               onKeyDown={e => { if (e.key === 'Enter' && manual) deliver(manual); }} />
           </div>
           <div className="flex">
-            <button className="btn btn-p" style={{ flex: 1 }} disabled={!cleanBarcode(manual)} onClick={() => deliver(manual)}>Look up</button>
+            <button className="btn btn-p" style={{ flex: 1 }} disabled={!normCode(manual)} onClick={() => deliver(manual)}>Look up</button>
             <button className="btn btn-w" onClick={() => setMode('options')}>Back</button>
           </div>
         </div>

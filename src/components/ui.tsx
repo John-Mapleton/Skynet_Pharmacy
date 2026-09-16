@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import type { Product } from '../types';
-import { formatCurrency, searchProducts, stockStatus } from '../lib/util';
+import { formatCurrency, searchProducts, stockStatus, productCodeLine } from '../lib/util';
 import { playAlarmSound } from '../lib/fun';
 
 // ── Bottom sheet ─────────────────────────────────────────────────────
@@ -45,7 +45,7 @@ export function ProductRow({ p, icon = '💊', onClick, dim, sub }: { p: Product
       <div className={`row-ico ${st}`}>{icon}</div>
       <div className="row-main">
         <div className="row-title">{p.name}</div>
-        <div className="row-sub">{sub ?? `${p.upc || p.ndc || 'No barcode'} · ${p.vendor || '—'}`}</div>
+        <div className="row-sub">{sub ?? `${productCodeLine(p)} · ${p.vendor || '—'}`}</div>
       </div>
       <div className={`row-qty ${st}`}>{p.on_hand}</div>
     </div>
@@ -76,7 +76,7 @@ export function ProductSummary({ p, children }: { p: Product; children?: ReactNo
   return (
     <div className="res-card">
       <div className="res-name">{p.name}</div>
-      <div className="res-sub">{p.upc || p.ndc || '—'} · {p.vendor || 'No vendor'}</div>
+      <div className="res-sub">{productCodeLine(p)} · {p.vendor || 'No vendor'}</div>
       <div className="flex" style={{ gap: 24, marginTop: 14 }}>
         <div><div className="kv-lbl">On hand</div><div className="kv-val a">{p.on_hand}</div></div>
         <div><div className="kv-lbl">Unit cost</div><div className="kv-val">{formatCurrency(p.cost_per_unit)}</div></div>
