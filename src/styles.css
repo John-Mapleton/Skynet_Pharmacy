@@ -82,6 +82,8 @@ input,select,button,textarea{font-family:inherit}
 .nb.on{color:var(--accent)}
 .nb-ico{width:26px;height:26px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:17px;transition:background .15s}
 .nb.on .nb-ico{background:var(--accent-bg)}
+.nb-badge{position:absolute;top:-4px;right:-8px;min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:var(--red);color:#FFF;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;font-family:var(--font);letter-spacing:0;box-shadow:0 0 0 2px #FFF}
+.nb-ico{position:relative}
 
 /* LAYOUT */
 .content{min-height:calc(100vh - 70px)}
@@ -289,3 +291,10 @@ select.inp{appearance:auto;-webkit-appearance:auto}
 
 .kbd{font-family:var(--mono);background:var(--surface3);padding:1px 6px;border-radius:5px;font-size:12px}
 pre.code{background:#1C1C1E;color:#A8D4F5;border-radius:var(--r);padding:14px;font-family:var(--mono);font-size:11px;line-height:1.6;white-space:pre-wrap;overflow-x:auto;max-height:240px;overflow-y:auto}
+
+/* PRODUCT FILE ACTIONS / INVOICE MATCH */
+.actions{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.action{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 4px;border:none;border-radius:12px;background:var(--surface2);color:var(--text);font-size:11px;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.action:active{background:var(--surface3)} .action:disabled{opacity:.4}
+.action-ico{font-size:20px}
+.match-btn{display:block;width:100%;text-align:left;background:none;border:none;padding:6px 0 0;font-size:11px;font-weight:600;cursor:pointer;line-height:1.4;-webkit-tap-highlight-color:transparent}
