@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { Product, TabProps, Transaction } from '../types';
 import { api } from '../lib/api';
-import { formatCurrency, timeAgo, formatDate, stockStatus, copyText, downloadText, productsToCsv, csvEscape } from '../lib/util';
+import { formatCurrency, timeAgo, formatDate, stockStatus, copyText, downloadText, productsToCsv, csvEscape, skuLabel } from '../lib/util';
 import { Empty, ProductPicker } from '../components/ui';
 
 const TX_META: Record<string, { icon: string; label: string }> = {
@@ -44,7 +44,7 @@ export function buildOrderSheet(products: Product[]): string {
     lines.push(vendor.toUpperCase());
     for (const p of list) {
       const suggested = Math.max(p.reorder_threshold * 2 - p.on_hand, 1);
-      lines.push(`  • ${p.name}${p.upc ? ` (UPC ${p.upc})` : p.ndc ? ` (NDC ${p.ndc})` : ''} — on hand ${p.on_hand}, reorder at ${p.reorder_threshold} → order ${suggested} ${p.unit}`);
+      lines.push(`  • ${p.name}${p.upc ? ` (UPC ${p.upc})` : p.ndc ? ` (DIN ${p.ndc})` : p.codes?.length ? ` (item # ${p.codes[0]})` : ` (SKYNET ${skuLabel(p.sku)})`} — on hand ${p.on_hand}, reorder at ${p.reorder_threshold} → order ${suggested} ${p.unit}`);
     }
     lines.push('');
   }
