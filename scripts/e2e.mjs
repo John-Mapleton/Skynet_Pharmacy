@@ -9,13 +9,33 @@ import { createRequire } from 'node:module';
 import assert from 'node:assert/strict';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const pwDir = process.env.PW_DIR || '/tmp/claude-0/-home-claude/818122f2-52a3-5b90-924f-95500c5f27a4/scratchpad';
+const pwDir = process.env.PW_DIR || '/tmp/claude-0/-home-claude/7f22b90d-d46d-57b1-8da7-e4da0c06d6f8/scratchpad';
 const require = createRequire(path.join(pwDir, 'package.json'));
 const { chromium } = require('playwright');
 const shots = path.join(pwDir, 'shots'); fs.mkdirSync(shots, { recursive: true });
 
+// Mock "Claude" that reads every invoice as the same three lines — enough to
+// exercise the match / link / create review flow without a real API key.
+import http from 'node:http';
+const INVOICE = [
+  { name: 'LIDOCAINE 2% 50ML', quantity: 10, item_code: 'MED-777', unit_cost: 15, vendor: 'Medisca' },
+  { name: 'Progesterone USP 100 g Jar', quantity: 1, item_code: 'MED-778', unit_cost: 0, vendor: 'Medisca' },
+  { name: 'Estradiol Base 25 g', quantity: 2, item_code: 'MED-779', unit_cost: 210, vendor: 'Medisca' },
+];
+const mockAI = http.createServer(async (req, res) => {
+  for await (const _ of req) { /* drain */ }
+  res.writeHead(200, { 'content-type': 'text/event-stream' });
+  const ev = (type, o) => res.write(`event: ${type}\ndata: ${JSON.stringify({ type, ...o })}\n\n`);
+  ev('message_start', {}); ev('content_block_start', { index: 0 });
+  ev('content_block_delta', { index: 0, delta: { type: 'text_delta', text: JSON.stringify(INVOICE) } });
+  ev('message_stop', {}); res.end();
+});
+await new Promise(r => mockAI.listen(8789, r));
+const tinyPng = path.join(pwDir, 'invoice.png');
+fs.writeFileSync(tinyPng, Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', 'base64'));
+
 const { startServer } = await import('./dev-api.mjs');
-const { server } = await startServer({ port: 8788, env: {} });
+const { server } = await startServer({ port: 8788, env: { ANTHROPIC_API_KEY: 'sk-test', ANTHROPIC_BASE_URL: 'http://localhost:8789' } });
 const preview = spawn('npx', ['vite', 'preview', '--port', '4173', '--strictPort'], { cwd: root, stdio: 'pipe' });
 await new Promise(r => setTimeout(r, 2500));
 
@@ -120,13 +140,101 @@ try {
   await page.locator('button', { hasText: 'Type the code' }).click();
   await page.getByPlaceholder('Enter barcode digits').fill('999999');
   await page.locator('button', { hasText: 'Look up' }).click();
-  await page.locator('.res-name', { hasText: 'not found' }).waitFor();
-  await page.locator('button', { hasText: 'Add this product now' }).click();
+  await page.locator('.res-name', { hasText: 'not recognised' }).waitFor();
+  await page.locator('button', { hasText: 'Add as a new product' }).click();
   await page.locator('.modal input.inp').first().fill('Progesterone USP 100 g');
   await page.locator('.modal button', { hasText: '✓ Add product' }).click();
   await toast(/added/);
   await page.locator('.res-name', { hasText: 'Progesterone' }).waitFor();
   ok('unknown barcode → quick add → ready to count');
+  await page.locator('button', { hasText: 'Cancel' }).click();
+
+  // No barcode? Find by name → count down → alarm fires from the Scan tab too
+  await page.getByPlaceholder('Search name, vendor or SKYNET #…').fill('lido');
+  await page.locator('.card-row .row', { hasText: 'Lidocaine' }).click();
+  await page.locator('.res-name', { hasText: 'Lidocaine' }).waitFor();
+  await page.getByPlaceholder('Enter count').fill('3');
+  await page.locator('.hint', { hasText: 'below reorder level' }).waitFor();
+  await page.locator('button', { hasText: 'Save count' }).click();
+  await page.locator('.skull-overlay').waitFor();
+  await shot('07b-scan-alarm');
+  await page.locator('.skull-modal button').click();
+  ok('search by name on Scan → count 7→3 crossed reorder level → alarm fired');
+
+  // Unrecognised code → link it to an existing product → it scans straight to it next time
+  await page.locator('button', { hasText: 'Type the code' }).click();
+  await page.getByPlaceholder('Enter barcode digits').fill('555555');
+  await page.locator('button', { hasText: 'Look up' }).click();
+  await page.locator('.res-name', { hasText: 'not recognised' }).waitFor();
+  await page.locator('button', { hasText: 'Link to an existing product' }).click();
+  await page.locator('.modal').getByPlaceholder('Search by name, vendor, SKYNET #…').fill('proges');
+  await page.locator('.modal .row', { hasText: 'Progesterone' }).click();
+  await toast(/now opens Progesterone/);
+  await page.locator('.res-name', { hasText: 'Progesterone' }).waitFor();
+  await page.locator('button', { hasText: 'Cancel' }).click();
+  await page.locator('button', { hasText: 'Type the code' }).click();
+  await page.getByPlaceholder('Enter barcode digits').fill('555555');
+  await page.locator('button', { hasText: 'Look up' }).click();
+  await page.locator('.res-name', { hasText: 'Progesterone' }).waitFor();
+  await page.locator('button', { hasText: 'Cancel' }).click();
+  ok('unrecognised code → linked to Progesterone → recognised on the next scan');
+
+  // Product file: SKYNET code shown, Use from inside the file, alarm again while still low
+  await tab('Products');
+  await page.locator('.row', { hasText: 'Lidocaine' }).click();
+  await page.locator('.modal', { hasText: 'SKYNET code' }).waitFor();
+  await page.locator('.modal', { hasText: '#0001' }).waitFor();
+  await page.locator('.modal .action', { hasText: 'Use' }).click();
+  await page.locator('.modal').getByPlaceholder('How many?').fill('1');
+  await page.locator('.modal button', { hasText: '− Use stock' }).click();
+  await page.locator('.skull-overlay').waitFor();
+  await page.locator('.skull-modal button').click();
+  await page.locator('.modal', { hasText: '2' }).waitFor();
+  await shot('07c-product-file');
+  await page.keyboard.press('Escape');
+  ok('product file shows SKYNET #0001; Use from the file → still low → alarm again');
+
+  // AI invoice: exact / probable / new — change a match, import, nothing duplicated
+  await tab('Invoice');
+  await page.locator('input[type=file]').setInputFiles(tinyPng);
+  await page.locator('text=Found 3 lines').waitFor();
+  await page.locator('.match-btn', { hasText: '✓ Matches "Lidocaine' }).waitFor();
+  await page.locator('.match-btn', { hasText: '≈ Probably "Progesterone' }).waitFor();
+  await page.locator('.match-btn', { hasText: 'NEW product' }).waitFor();
+  await shot('07d-invoice-review');
+  await page.locator('.match-btn', { hasText: '≈ Probably' }).click();
+  await page.locator('.modal', { hasText: 'Which product is this?' }).waitFor();
+  await page.locator('.modal .row', { hasText: 'Progesterone' }).click();
+  await page.locator('.match-btn', { hasText: '🔗 Linked to "Progesterone' }).waitFor();
+  await page.locator('button', { hasText: 'Import 3 lines' }).click();
+  await page.locator('text=Import complete').waitFor();
+  await page.locator('text=1 new product added').waitFor();
+  await page.locator('text=2 existing products updated').waitFor();
+  await shot('07e-invoice-done');
+  ok('invoice: exact + probable + new detected, match changed by hand, 2 updated / 1 added');
+
+  // Second invoice from the same vendor: item numbers were learned → all 3 match without help
+  await page.locator('button', { hasText: 'Import another invoice' }).click();
+  await page.locator('input[type=file]').setInputFiles(tinyPng);
+  await page.locator('text=Found 3 lines').waitFor();
+  assert.equal(await page.locator('.match-btn', { hasText: '✓ Matches' }).count(), 3, 'all three lines match by learned item #');
+  await page.locator('button', { hasText: 'Cancel' }).click();
+  ok('second invoice: all lines matched automatically via learned vendor item numbers');
+
+  // Receive from invoice INSIDE a product file: only that product\'s line is pre-selected
+  await tab('Products');
+  await page.locator('.row', { hasText: 'Progesterone' }).click();
+  await page.locator('.modal .action', { hasText: 'From invoice' }).click();
+  await page.locator('.modal input[type=file]').setInputFiles(tinyPng);
+  await page.locator('.modal', { hasText: 'Found 3 lines' }).waitFor();
+  assert.equal(await page.locator('.modal .inv-chk:checked').count(), 1, 'only the Progesterone line is ticked');
+  await page.locator('.modal button', { hasText: 'Import 1 line' }).click();
+  await page.locator('.modal', { hasText: 'Import complete' }).waitFor();
+  await page.locator('.modal button', { hasText: 'Back to Progesterone' }).click();
+  await page.locator('.modal', { hasText: 'On hand' }).waitFor();
+  await page.keyboard.press('Escape');
+  await page.locator('.row', { hasText: 'Progesterone' }).locator('.row-qty', { hasText: '2' }).waitFor();
+  ok('invoice scanned from inside the product file → only its line pre-selected → +1 received');
 
   // Spreadsheet import (real xlsx)
   const XLSX = require(path.join(root, 'node_modules/xlsx'));
@@ -150,18 +258,18 @@ try {
   await shot('08-import-map');
   await page.locator('button', { hasText: 'Import 3 rows' }).click();
   await page.locator('text=Import complete').waitFor();
-  await page.locator('text=2 new products added').waitFor();
-  await page.locator('text=1 existing product updated').waitFor();
-  await page.locator('text=1 price change').waitFor();
+  await page.locator('text=1 new product added').waitFor();
+  await page.locator('text=2 existing products updated').waitFor();
+  await page.locator('text=/\\d price change/').waitFor();
   await shot('09-import-done');
-  ok('xlsx import: columns auto-mapped, 2 added / 1 merged / price change detected');
+  ok('xlsx import: columns auto-mapped, 1 added / 2 merged (no duplicates) / price change detected');
 
   // Products list reflects import
   await tab('Products');
   await page.locator('.row', { hasText: 'Lidocaine' }).locator('.row-qty', { hasText: '30' }).waitFor();
   await page.locator('.chip', { hasText: 'Out' }).click();
   await page.locator('.row', { hasText: 'Versabase' }).waitFor();
-  assert.equal(await page.locator('.card-row .row').count(), 2); // Versabase + Progesterone
+  assert.equal(await page.locator('.card-row .row').count(), 1); // Versabase only (Progesterone was received)
   await page.locator('.chip', { hasText: 'All' }).click();
   ok('products filter chips work');
 
@@ -195,7 +303,7 @@ try {
   await tab('Settings');
   for (const k of '1984') await page.locator('.key', { hasText: k }).first().click();
   await page.locator('text=Built into this site').waitFor();
-  await page.locator('text=AI not set up yet').waitFor();
+  await page.locator('text=AI is active').waitFor();
   await shot('14-settings');
   await page.locator('textarea').fill('John, Brad');
   await page.locator('button', { hasText: 'Save staff list' }).click();
@@ -270,5 +378,5 @@ try {
   if (errors.length) console.error('browser errors:', errors);
   process.exitCode = 1;
 } finally {
-  await browser.close(); preview.kill(); server.close();
+  await browser.close(); preview.kill(); server.close(); mockAI.close();
 }

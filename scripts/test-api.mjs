@@ -165,6 +165,143 @@ await test('5 wrong PINs → locked for 60s, correct PIN also blocked, 429 not 4
 });
 await test('AI proxy reports missing key clearly', async () => { const r = await call('/claude', { method: 'POST', body: { messages: [] }, headers: PIN }); assert.equal(r.status, 503); });
 
+// ── v5.1: identity, matching, alarms ──
+console.log('\nIdentity & matching');
+await op({ op: 'db.reset' }, ADMIN);
+let cream, lipo;
+await test('every product gets a SKYNET code (EAN-13, 200… prefix, valid check digit)', async () => {
+  const r = await op({ op: 'product.add', product: { name: 'Versabase Cream 1 kg', vendor: 'PCCA' } });
+  cream = r.body.product;
+  assert.match(cream.sku, /^200\d{10}$/);
+  const d = cream.sku.split('').map(Number);
+  const sum = d.slice(0, 12).reduce((s, x, i) => s + x * (i % 2 ? 3 : 1), 0);
+  assert.equal(d[12], (10 - sum % 10) % 10);
+  const r2 = await op({ op: 'product.add', product: { name: 'Lipoderm Base 500 g', codes: 'PCCA-30-1234, 0777' } });
+  lipo = r2.body.product;
+  assert.notEqual(lipo.sku, cream.sku);
+  assert.deepEqual(lipo.codes, ['PCCA301234', '0777']);
+});
+await test('legacy products (no sku) get one on restore', async () => {
+  const file = (await call('/export', { headers: ADMIN })).body;
+  file.products.push({ id: 'old1', name: 'Old Timer', on_hand: 1 });
+  const r = await op({ op: 'db.restore', db: file }, ADMIN);
+  const p = r.body.state.products.find(p => p.id === 'old1');
+  assert.match(p.sku, /^200\d{10}$/);
+  assert.equal(new Set(r.body.state.products.map(p => p.sku)).size, r.body.state.products.length, 'skus unique');
+  await op({ op: 'product.delete', id: 'old1' });
+});
+await test('product.addCode: digits → UPC when empty, otherwise alias; clashes rejected', async () => {
+  const r = await op({ op: 'product.addCode', id: cream.id, code: '0 62701-11111 8' });
+  assert.equal(r.body.product.upc, '062701111118');
+  const r2 = await op({ op: 'product.addCode', id: cream.id, code: 'med-55' });
+  assert.deepEqual(r2.body.product.codes, ['MED55']);
+  assert.equal((await op({ op: 'product.addCode', id: lipo.id, code: '062701111118' })).status, 400);
+  assert.equal((await op({ op: 'product.add', product: { name: 'Another', codes: ['pcca 30 1234'] } })).status, 400);
+});
+await test('excel import learns a vendor item # and later matches on it alone', async () => {
+  const r = await op({ op: 'import', mode: 'excel', items: [{ name: 'VERSABASE CREAM, 1KG', item_code: 'VB-1000', on_hand: 12 }] });
+  assert.equal(r.body.updated, 1, JSON.stringify(r.body)); // matched by normalised name
+  let p = r.body.state.products.find(p => p.id === cream.id);
+  assert.equal(p.on_hand, 12); assert.ok(p.codes.includes('VB1000'));
+  const r2 = await op({ op: 'import', mode: 'invoice', items: [{ name: 'completely different wording', item_code: 'vb 1000', quantity: 3, unit_cost: 61 }] });
+  assert.equal(r2.body.updated, 1); assert.equal(r2.body.added, 0);
+  p = r2.body.state.products.find(p => p.id === cream.id);
+  assert.equal(p.on_hand, 15); assert.equal(p.cost_per_unit, 61);
+});
+await test('similar-but-different names are NOT merged silently; reviewer can link with product_id', async () => {
+  const r = await op({ op: 'import', mode: 'invoice', items: [{ name: 'Lipoderm Base 500g Jar', quantity: 2, item_code: 'LD-500' }] });
+  assert.equal(r.body.added, 1, JSON.stringify(r.body)); // "jar" makes it uncertain → new product, never a silent merge
+  const stray = r.body.state.products.find(p => p.name === 'Lipoderm Base 500g Jar');
+  await op({ op: 'product.delete', id: stray.id });
+  const r2 = await op({ op: 'import', mode: 'invoice', items: [{ name: 'Lipoderm Base 500g Jar', quantity: 2, item_code: 'LD-500', product_id: lipo.id }] });
+  assert.equal(r2.body.updated, 1); assert.equal(r2.body.lines[0].product_name, 'Lipoderm Base 500 g');
+  const p = r2.body.state.products.find(p => p.id === lipo.id);
+  assert.equal(p.on_hand, 2); assert.ok(p.codes.includes('LD500'));
+  // and the next invoice from that vendor matches by item # with no help
+  const r3 = await op({ op: 'import', mode: 'invoice', items: [{ name: 'LIPODERM 500G', quantity: 1, item_code: 'LD-500' }] });
+  assert.equal(r3.body.updated, 1); assert.equal(r3.body.added, 0);
+});
+await test('invoice never overwrites an existing UPC with a misread one — it is kept as an extra code', async () => {
+  const r = await op({ op: 'import', mode: 'invoice', items: [{ name: 'Versabase Cream 1 kg', upc: '999999999999', quantity: 1 }] });
+  const p = r.body.state.products.find(p => p.id === cream.id);
+  assert.equal(p.upc, '062701111118'); assert.ok(p.codes.includes('999999999999'));
+});
+await test('create:true forces a new product even when a similar one exists', async () => {
+  const r = await op({ op: 'import', mode: 'invoice', items: [{ name: 'Versabase Cream 100 g', quantity: 4, create: true }] });
+  assert.equal(r.body.added, 1);
+  assert.equal(r.body.state.products.filter(p => /versabase/i.test(p.name)).length, 2);
+});
+await test('duplicate by normalised name rejected on add ("lidocaine hcl usp, 100g" ≡ "Lidocaine HCl 100 g")', async () => {
+  await op({ op: 'product.add', product: { name: 'Lidocaine HCl 100 g' } });
+  const r = await op({ op: 'product.add', product: { name: 'LIDOCAINE HCL USP, 100G' } });
+  assert.equal(r.status, 400); assert.match(r.body.error, /already exists/);
+});
+
+console.log('\nLow-stock alarm');
+await test('count DOWN to/below the reorder level raises the alarm (not just Use)', async () => {
+  const r = await op({ op: 'product.add', product: { name: 'Alarm Test', reorder_threshold: 5, on_hand: 20 } });
+  const id = r.body.product.id;
+  let c = await op({ op: 'stock.count', id, qty: 15 });
+  assert.equal(c.body.alarm, false); assert.equal(c.body.lowStock, false);
+  c = await op({ op: 'stock.count', id, qty: 5 });
+  assert.equal(c.body.alarm, true); assert.equal(c.body.crossedThreshold, true); assert.equal(c.body.lowStock, true);
+  // already low and still going down → alarm again (previous behaviour only fired on the exact crossing)
+  c = await op({ op: 'stock.use', id, qty: 2, reason: 'Compounding' });
+  assert.equal(c.body.alarm, true); assert.equal(c.body.crossedThreshold, false);
+  // re-counting the same low number is not a new event
+  c = await op({ op: 'stock.count', id, qty: 3 });
+  assert.equal(c.body.alarm, false); assert.equal(c.body.lowStock, true);
+  // receiving above the level clears it
+  c = await op({ op: 'stock.receive', id, qty: 10 });
+  assert.equal(c.body.alarm, false); assert.equal(c.body.lowStock, false);
+  await op({ op: 'product.delete', id });
+});
+
+// ── pure helpers (bundled from TS) ──
+import { build as esbuild } from 'esbuild';
+const helpersOut = path.resolve('scripts/.match.bundle.mjs');
+await esbuild({ entryPoints: ['netlify/lib/match.ts'], bundle: true, format: 'esm', platform: 'neutral', outfile: helpersOut, logLevel: 'silent' });
+const M = await import(helpersOut);
+const labelOut = path.resolve('scripts/.label.bundle.mjs');
+await esbuild({ entryPoints: ['src/lib/label.ts'], bundle: true, format: 'esm', platform: 'browser', outfile: labelOut, logLevel: 'silent' });
+const Lb = await import(labelOut);
+console.log('\nHelpers');
+await test('nameKey normalises punctuation, case, units and filler', async () => {
+  assert.equal(M.nameKey('Lidocaine HCl USP, 100 g'), M.nameKey('LIDOCAINE HCL 100G'));
+  assert.equal(M.nameKey('Testosterone 1% Cream 30 mL'), M.nameKey('testosterone 1 % cream 30ml'));
+  assert.notEqual(M.nameKey('Progesterone 100 g'), M.nameKey('Progesterone 500 g'));
+});
+await test('nameSimilarity: different strength/size scores low, extra word scores medium', async () => {
+  assert.ok(M.nameSimilarity('Progesterone USP 100 g', 'Progesterone 500 g') < 0.6);
+  const s = M.nameSimilarity('Lipoderm Base 500g Jar', 'Lipoderm Base 500 g');
+  assert.ok(s >= 0.6 && s < 0.9, 'got ' + s);
+});
+await test('findByCode: UPC-A/EAN-13 forms, GS1 DataMatrix, SKYNET short number, aliases', async () => {
+  const products = [
+    { id: 'a', name: 'A', upc: '062701111118', ndc: null, sku: M.makeSku(7), codes: ['MED55'], created_at: '' },
+    { id: 'b', name: 'B', upc: null, ndc: '02245678', sku: M.makeSku(8), codes: [], created_at: '' },
+  ];
+  assert.equal(M.findByCode(products, '0062701111118')?.id, 'a');   // EAN-13 form of a UPC-A
+  assert.equal(M.findByCode(products, '(01)00062701111118(17)261231(10)LOT9')?.id, 'a'); // GS1
+  assert.equal(M.findByCode(products, '0100062701111118172612311 0LOT9')?.id, 'a');
+  assert.equal(M.findByCode(products, 'med-55')?.id, 'a');
+  assert.equal(M.findByCode(products, M.makeSku(8))?.id, 'b');
+  assert.equal(M.findByCode(products, '8')?.id, 'b');               // typed "#8"
+  assert.equal(M.findByCode(products, '2245678')?.id, 'b');          // DIN without the leading zero
+  assert.equal(M.findByCode(products, '12345'), undefined);
+});
+await test('EAN-13 label encoder produces 95 modules with correct guards', async () => {
+  const bits = Lb.ean13Modules('2000000000017');
+  assert.equal(bits.length, 95);
+  assert.equal(bits.slice(0, 3), '101'); assert.equal(bits.slice(45, 50), '01010'); assert.equal(bits.slice(92), '101');
+  assert.equal(Lb.ean13Modules('4006381333931').slice(3, 10), '0001101'); // first digit 4 → parity LGLLGG; digit "0" in L set
+});
+await test('EAN-13 known example encodes (4006381333931 → check digit 1)', async () => {
+  assert.equal(M.ean13CheckDigit('400638133393'), '1');
+  assert.ok(Lb.ean13Svg('4006381333931').includes('<svg'));
+});
+(await import('node:fs')).unlinkSync(helpersOut); (await import('node:fs')).unlinkSync(labelOut);
+
 // ── AI proxy streaming, against a mock Anthropic server ──
 import http from 'node:http';
 import path from 'node:path';
