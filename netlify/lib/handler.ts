@@ -142,6 +142,7 @@ export function createHandler(getStore: () => BlobStore, env: Env) {
             case 'product.add': return { product: ops.addProduct(d, body.product || {}, by) };
             case 'product.update': return { product: ops.updateProduct(d, String(body.id), body.patch || {}, by) };
             case 'product.delete': ops.deleteProduct(d, String(body.id), by); return { ok: true };
+            case 'product.addCode': return { product: ops.addProductCode(d, String(body.id), body.code, by, notes) };
             case 'stock.count': return ops.countStock(d, String(body.id), body.qty, by, notes);
             case 'stock.receive': return ops.receiveStock(d, String(body.id), body.qty, by, { cost: body.cost, notes });
             case 'stock.use': return ops.useStock(d, String(body.id), body.qty, String(body.reason || ''), by);
