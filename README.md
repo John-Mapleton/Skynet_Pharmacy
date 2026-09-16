@@ -1,9 +1,43 @@
-# SKYNET — Mapleton Pharmacy Inventory (v5, self-contained)
+# SKYNET — Mapleton Pharmacy Inventory (v5.1, self-contained)
 
 A phone-first inventory app for the pharmacy. Scan barcodes, count stock, receive
 deliveries, log what was used, import invoices with AI, and see what needs
 reordering. Everything lives on the Netlify site itself — **no Supabase, no
 database account, nothing to connect, nothing that pauses.**
+
+## What changed in v5.1 (Sept 2026)
+
+Three problems reported after launch, and what was done about each:
+
+**1. Products with no barcode or DIN.** Every product now carries a **SKYNET
+code** — a real EAN-13 number in the 200… "in-store" range (shown as `#0042`),
+assigned automatically, including to products that already existed. Open the
+product → **Print label** (or Products → "No barcode" filter → 🏷️ Labels) and
+stick the sticker on the bin, shelf or jar; it scans like any barcode. You can
+also just type `42` on the Scan tab, or use the new **Find it by name** search
+under the scanner. A product can hold any number of *other codes* (a second
+pack-size barcode, a vendor item number); when an unknown code is scanned, the
+Scan tab offers **Link to an existing product** instead of only "add new".
+
+**2. Invoices creating duplicate products.** Matching was exact-only, so
+"LIDOCAINE HCL USP 100G" never matched "Lidocaine HCl 100 g". Now names are
+normalised (case, punctuation, units, USP/BP), vendor **item numbers** are read
+from the invoice and remembered, and the review screen shows for every line
+whether it *matches*, *probably matches* (amber — confirm it), or is *new*, with
+a **change** button to pick the right product or force a new one. Nothing
+similar-but-different is ever merged silently. Each product's file has a
+**From invoice** action that runs the same flow with that product's line
+pre-selected. An AI-misread UPC never overwrites a real one.
+
+**3. Low-stock alarm not firing.** It only fired on the exact crossing from
+above to below the reorder level, only from the Use tab, and on iPhone/iPad the
+sound was blocked because it played outside a tap. Now the alarm fires from
+**Count, Use and the product file** whenever stock is at/below the reorder
+level after going down, audio is primed during the tap, and the Dashboard tab
+shows a red badge with the number of products needing attention.
+
+Also: GS1 DataMatrix codes on pharma packs are understood (the GTIN inside is
+matched), scanned codes may contain letters, and CSV export includes the codes.
 
 ## What changed in v5
 
@@ -42,13 +76,16 @@ Node 22). Nothing else to configure.
 ## Using it
 
 - **Dashboard** – stock value, low/out counts, alerts, "copy order list".
-- **Scan** – live camera / photo / type the code → enter the physical count.
-  Unknown barcode → add the product on the spot.
-- **Products** – search, filter Low/Out, add/edit/delete, per-product history.
+- **Scan** – live camera / photo / type the code, or find it by name → enter the
+  physical count. Unknown code → link it to an existing product, or add a new one.
+- **Products** – search (name, any code, `#42`), filter Low/Out/No barcode,
+  print labels; a product's file has Count / Receive / Use / From invoice /
+  Print label plus its identifiers and history.
 - **Receive** – add a delivery; optional new unit cost (price changes are logged).
 - **Use** – compounding / dispensed / expired / damaged / sample / other.
-  Crossing the reorder level sets off the alarm.
-- **Invoice** – PDF or photo → Claude extracts the lines → you review/fix → import.
+  Dropping to or below the reorder level sets off the alarm.
+- **Invoice** – PDF or photo → Claude extracts the lines → you confirm each
+  match (or change it) → import. Vendor item numbers are learned for next time.
 - **Import** – .xlsx/.csv with any column names; auto-mapped, re-import safe.
 - **Reports** – overview, reorder list by vendor, per-product history, audit log,
   CSV exports.
@@ -64,7 +101,7 @@ on conflict (`netlify/lib/store.ts`).
 
 API (all under `/api`, staff PIN in header `x-skynet-pin`, admin PIN in
 `x-skynet-admin`): `GET /health`, `POST /unlock`, `GET /state`,
-`GET /transactions`, `POST /op` (`product.add|update|delete`,
+`GET /transactions`, `POST /op` (`product.add|update|delete|addCode`,
 `stock.count|receive|use`, `import`, `settings.update`, `db.restore`,
 `db.restoreBackup`, `db.reset`), `GET /export`, `GET /backups`, `POST /claude`.
 
@@ -73,7 +110,7 @@ API (all under `/api`, staff PIN in header `x-skynet-pin`, admin PIN in
 ```bash
 npm install
 npm run dev        # Vite on :5173 + local API on :8788 (in-memory store, no Netlify needed)
-npm test           # typecheck + 32 API tests (concurrency, auth lockout, streaming AI proxy)
+npm test           # typecheck + 46 API/unit tests (matching, aliases, alarms, labels, concurrency, auth, AI proxy)
 npm run build
 node scripts/e2e.mjs   # browser walk-through of the built app (needs Playwright, see script header)
 ```

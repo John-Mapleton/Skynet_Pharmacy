@@ -7,6 +7,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import './styles.css';
 import type { AppState, Product, ToastType } from './types';
 import { api, onLocked, session, ApiError } from './lib/api';
+import { stockStatus } from './lib/util';
 import { PinScreen, Sheet } from './components/ui';
 import { Dashboard } from './tabs/Dashboard';
 import { ScanTab } from './tabs/ScanTab';
@@ -116,6 +117,7 @@ export default function SkyNet() {
   }
 
   const tabProps = { products, refresh: () => refresh(false), applyState, showToast, setTab, user };
+  const needsAttention = products.filter(p => stockStatus(p) !== 'a').length;
   const subtitle = loading ? 'Syncing…' : syncError ? 'Sync error' : !loaded ? 'Loading…' : `${products.length} product${products.length === 1 ? '' : 's'}`;
 
   return (
@@ -162,7 +164,7 @@ export default function SkyNet() {
       <nav className="nav">
         {TABS.map(t => (
           <button key={t.id} className={`nb ${tab === t.id ? 'on' : ''}`} onClick={() => setTab(t.id)}>
-            <span className="nb-ico">{t.icon}</span>
+            <span className="nb-ico">{t.icon}{t.id === 'dash' && needsAttention > 0 && <span className="nb-badge">{needsAttention > 99 ? '99+' : needsAttention}</span>}</span>
             <span>{t.label}</span>
           </button>
         ))}

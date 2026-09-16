@@ -3,6 +3,7 @@
 // against an in-memory store in local tests (see scripts/dev-server.mjs).
 
 import { type DbDoc, type Product, type Transaction, MAX_BACKUPS, MAX_TRANSACTIONS, emptyDb } from './types';
+import { assignSkus, isSku, normCode } from './match';
 
 const uidFallback = () => (globalThis.crypto?.randomUUID?.() || Math.random().toString(36).slice(2) + Date.now().toString(36));
 
@@ -136,7 +137,10 @@ export function normalise(raw: any): DbDoc {
       id: s(p.id) || uidFallback(),
       created_at: s(p.created_at) || doc.updatedAt,
       name: s(p.name),
-      upc: sOrNull(p.upc), ndc: sOrNull(p.ndc), vendor: sOrNull(p.vendor), category: sOrNull(p.category),
+      upc: sOrNull(p.upc), ndc: sOrNull(p.ndc),
+      sku: isSku(p.sku) ? String(p.sku) : '',
+      codes: Array.isArray(p.codes) ? [...new Set(p.codes.map((c: unknown) => normCode(c)).filter((c: string) => c.length >= 2))].slice(0, 20) as string[] : [],
+      vendor: sOrNull(p.vendor), category: sOrNull(p.category),
       unit: s(p.unit) || 'each',
       cost_per_unit: Math.max(0, num(p.cost_per_unit, 0)),
       reorder_threshold: Math.max(0, Math.round(num(p.reorder_threshold, 10))),
@@ -157,5 +161,8 @@ export function normalise(raw: any): DbDoc {
       notes: s(t.notes, 300),
       performed_by: s(t.performed_by, 60) || 'Staff',
     }));
+  // Products from before v5.1 have no SKYNET code yet — give them one. This is
+  // deterministic (oldest first) so a read and the write that follows agree.
+  assignSkus(doc.products);
   return doc;
 }

@@ -10,8 +10,10 @@ export interface Product {
   id: string;
   created_at: string;
   name: string;
-  upc: string | null;
-  ndc: string | null;
+  upc: string | null;      // manufacturer barcode (optional)
+  ndc: string | null;      // NDC / DIN (optional)
+  sku: string;             // SKYNET code — EAN-13 in the 200… in-store range, assigned automatically to every product
+  codes: string[];         // extra codes that also identify this product (other pack-size barcodes, vendor item numbers)
   vendor: string | null;
   category: string | null;
   unit: string;

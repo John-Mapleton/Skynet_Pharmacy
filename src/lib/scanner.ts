@@ -3,7 +3,7 @@
 //   2. ZXing (bundled JS decoder, lazy-loaded) — works on iPhone Safari too
 //   3. Photo → ZXing → Claude vision as the last resort (see readBarcodeWithAI)
 
-import { cleanBarcode, imageToJpegBase64 } from './util';
+import { normCode, imageToJpegBase64 } from './util';
 import { readBarcodeWithAI } from './ai';
 
 const FORMATS = ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39', 'itf', 'data_matrix', 'qr_code'];
@@ -37,7 +37,7 @@ export async function startLiveScan(video: HTMLVideoElement, onCode: (code: stri
   let stopImpl: () => void = () => {};
   const stop = () => { if (done) return; done = true; try { stopImpl(); } catch {} };
   const fire = (raw: string) => {
-    const code = cleanBarcode(raw);
+    const code = normCode(raw);
     if (done || !code) return;
     stop();
     onCode(code);
@@ -81,7 +81,7 @@ export async function decodeImageFile(file: File, opts: { allowAI?: boolean } = 
   try {
     const reader = await loadZxing();
     const result = await reader.decodeFromImageUrl('data:image/jpeg;base64,' + jpeg);
-    const code = cleanBarcode(result?.getText?.());
+    const code = normCode(result?.getText?.());
     if (code) return { code, via: 'zxing' };
   } catch { /* not found locally — fall through */ }
   if (opts.allowAI === false) return { code: '', via: 'none' };

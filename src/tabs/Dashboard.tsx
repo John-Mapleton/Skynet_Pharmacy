@@ -44,11 +44,11 @@ export function Dashboard({ products, setTab, showToast, user }: TabProps) {
             <div className="stat-header"><div className="stat-dot a" /><div className="stat-lbl">Inventory value</div></div>
             <div className="stat-val" style={{ fontSize: value >= 100000 ? 22 : 26 }}>${value.toLocaleString('en-CA', { maximumFractionDigits: 0 })}</div>
           </div>
-          <div className={`stat ${low > 0 ? 'warn' : ''}`}>
+          <div className={`stat ${low > 0 ? 'warn' : ''}`} onClick={() => setTab('reports')}>
             <div className="stat-header"><div className="stat-dot w" /><div className="stat-lbl">Low stock</div></div>
             <div className="stat-val">{low}</div>
           </div>
-          <div className={`stat ${out > 0 ? 'danger' : ''}`}>
+          <div className={`stat ${out > 0 ? 'danger' : ''}`} onClick={() => setTab('reports')}>
             <div className="stat-header"><div className="stat-dot d" /><div className="stat-lbl">Out of stock</div></div>
             <div className="stat-val">{out}</div>
           </div>

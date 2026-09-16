@@ -60,16 +60,20 @@ export async function readBarcodeWithAI(jpegBase64: string): Promise<string> {
   return text.replace(/[^0-9]/g, '');
 }
 
-export interface InvoiceLine { name: string; quantity: number; upc: string; ndc: string; vendor: string; category: string; unit: string; unit_cost: number }
+export interface InvoiceLine { name: string; quantity: number; upc: string; ndc: string; item_code: string; vendor: string; category: string; unit: string; unit_cost: number }
 
 /** Extract line items from an invoice PDF or photo. */
 export async function extractInvoice(base64: string, isPdf: boolean): Promise<InvoiceLine[]> {
   const instructions =
-    'You are reading a supplier invoice for a compounding pharmacy. Extract every product line item. ' +
+    'You are reading a supplier invoice for a compounding pharmacy in Canada. Extract every product line item. ' +
     'Return ONLY a JSON array (no markdown, no commentary). Each element: ' +
-    '{"name": string, "quantity": number, "upc": string, "ndc": string, "vendor": string, "category": string, "unit": string, "unit_cost": number}. ' +
-    'Use "" for unknown text fields and 0 for unknown numbers. "vendor" is the supplier who issued the invoice. ' +
-    '"unit_cost" is the price per unit before tax. Ignore shipping, tax and subtotal lines.';
+    '{"name": string, "quantity": number, "upc": string, "ndc": string, "item_code": string, "vendor": string, "category": string, "unit": string, "unit_cost": number}. ' +
+    'Rules: "name" is the product description INCLUDING strength and pack size (e.g. "Lidocaine HCl USP 100 g"). ' +
+    '"quantity" is the number of units shipped (not ordered/back-ordered). ' +
+    '"upc" is a 12–14 digit barcode number if printed; "ndc" is an NDC or Canadian DIN number if printed; ' +
+    '"item_code" is the supplier\'s own item / catalogue / product number for that line (e.g. "0245-01", "MED12345") — this is very important for matching future invoices. ' +
+    '"unit" is the pack unit (each, bottle, 100 g, 500 mL…). Use "" for unknown text fields and 0 for unknown numbers. ' +
+    '"vendor" is the supplier who issued the invoice. "unit_cost" is the price per unit before tax. Ignore shipping, tax, deposits and subtotal lines.';
   const content = isPdf
     ? [{ type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: base64 } }, { type: 'text', text: instructions }]
     : [{ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: base64 } }, { type: 'text', text: instructions }];
@@ -82,7 +86,8 @@ export async function extractInvoice(base64: string, isPdf: boolean): Promise<In
     name: String(x.name || '').trim(),
     quantity: Math.max(0, Math.round(parseFloat(x.quantity) || 0)),
     upc: String(x.upc || '').replace(/[^0-9]/g, ''),
-    ndc: String(x.ndc || '').trim(),
+    ndc: String(x.ndc || x.din || '').trim(),
+    item_code: String(x.item_code || x.sku || x.code || '').trim(),
     vendor: String(x.vendor || '').trim(),
     category: String(x.category || '').trim(),
     unit: String(x.unit || '').trim(),
