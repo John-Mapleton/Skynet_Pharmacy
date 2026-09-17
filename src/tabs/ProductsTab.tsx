@@ -13,7 +13,14 @@ import { InvoiceFlow } from './ImportTabs';
 type Form = { name: string; upc: string; ndc: string; codes: string; vendor: string; category: string; unit: string; cost_per_unit: string; reorder_threshold: string; on_hand: string };
 const blank: Form = { name: '', upc: '', ndc: '', codes: '', vendor: '', category: '', unit: 'each', cost_per_unit: '', reorder_threshold: '10', on_hand: '0' };
 
-const hasNoBarcode = (p: Product) => !p.upc && !p.ndc && !(p.codes || []).length;
+/**
+ * "No barcode" = nothing on the package that scans: no UPC, no NDC/DIN, and no
+ * extra code that is itself a barcode (8–14 digits). Vendor item numbers like
+ * "S13894BXX" don't count — they're learned from invoices, not printed as a
+ * scannable barcode, so those products still need a SKYNET label.
+ */
+const isBarcodeLike = (c: string) => /^\d{8,14}$/.test(normCode(c));
+export const hasNoBarcode = (p: Product) => !p.upc && !p.ndc && !(p.codes || []).some(isBarcodeLike);
 
 export function ProductsTab({ products, applyState, showToast }: TabProps) {
   const [q, setQ] = useState('');
